@@ -59,7 +59,7 @@ source(paste0(fun.path,"clean_fluxnet_gpp.R"))
 #b1. write a function to subset the interested variables
 #----------------
 subset_interest_vars<-function(proc.path,sel_site){
-  # proc.path<-"D:/Github/Velux_project/data-raw/Data_from_ICOS_sites/Unzip_ori_HH_data/"
+  # proc.path<-"D:/EE_WSL/Data_for_use/Data_from_ICOS_sites/Unzip_ori_HH_data/"
   # sel_site<-"CH-Dav"
 
   setwd(proc.path)
@@ -156,7 +156,7 @@ df_all$VPD_F_MDS<-df_all$VPD_F_MDS*100
 #
 #the sites according Beni' datasets-->from Fluxnet2015
 setwd("D:/Github/Velux_project/")
-save.path<-"./data-raw/Data_from_ICOS_sites/processed_data_from_ICOS/"
+save.path<-"D:/EE_WSL/Data_for_use/Data_from_ICOS_sites/processed_data_from_ICOS/"
 #for the other available sites in FLUXNET2015:
 save(df_all,file=paste0(save.path,"HH_data.RDA"))
 
@@ -215,5 +215,5 @@ apply(df_all_sel_daily[,-c(1:2)],2,function(x){sum(!is.na(x))})
 #c2.save the preprocessed daily data
 #----------------
 #I.for the sites accoring to the data sent by Beni:
-save.path<-"./data-raw/Data_from_ICOS_sites/processed_data_from_ICOS/"
+save.path<-"D:/EE_WSL/Data_for_use/Data_from_ICOS_sites/processed_data_from_ICOS/"
 save(df_all_sel_daily,file=paste0(save.path,"Daily_data.RDA"))
