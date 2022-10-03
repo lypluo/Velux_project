@@ -129,4 +129,185 @@ mod_lmer <- lmer(lue ~ temp+log(vpd) + (1|sitename),
 #                  data=tmp)
 
 summary(mod_lmer)
-#working here!!
+#predict the gpp using the developed lmer...
+ddf <- df.update %>%
+  mutate(lue_lmer = predict(mod_lmer, newdata = .)) %>%
+  mutate(gpp_lmer = lue_lmer * fapar * PPFD_IN_fullday_mean)
+
+#compare the modelled gpp with observed gpp
+devtools::load_all("D:/Github/rbeni/")
+library(rbeni)
+
+##-----------
+#seasonal cycle
+##-----------
+
+df_meandoy <- ddf %>%
+  group_by(sitename, doy) %>%
+  dplyr::summarise(across(starts_with("gpp_"), mean, na.rm = TRUE))
+
+##plot by site:
+df_meandoy %>%
+  filter(!is.nan(gpp_lmer) & !is.infinite(gpp_lmer))%>% ##this filter is important
+  pivot_longer(c(gpp_obs, gpp_mod, gpp_lmer), names_to = "model", values_to = "gpp") %>%
+  #fct_relevel: in tidyverse package
+  mutate(model = fct_relevel(model, "gpp_obs", "gpp_mod","gpp_lmer")) %>%
+  dplyr::filter((model %in% c( "gpp_obs", "gpp_mod","gpp_lmer"))) %>%
+  ggplot() +
+  # geom_ribbon(
+  #   aes(x = doy, ymin = obs_min, ymax = obs_max),
+  #   fill = "black",
+  #   alpha = 0.2
+  #   ) +
+  geom_line(aes(x = doy, y = gpp, color = model), size = 0.4) +
+  labs(y = expression( paste("Simulated GPP (g C m"^-2, " d"^-1, ")" ) ),
+       x = "DOY") +
+  facet_wrap( ~sitename, ncol = 3 ) +    # , labeller = labeller(climatezone = list_rosetta)
+  theme_gray() +
+  theme(legend.position = "bottom") +
+  scale_color_manual(
+    name="Model: ",
+    values=c("black", "red", "royalblue")
+  )
+
+##-------------------------
+## Normalise to peak season
+##-------------------------
+norm_to_peak <- function(df, mod, obs){
+  # df<-ddf_t
+  # mod<-"gpp_lmer"
+  # obs<-"gpp_obs"
+
+  q75_obs <- quantile(df[[obs]], probs = 0.75, na.rm = TRUE)
+  q75_mod <- quantile(df[[mod]], probs = 0.75, na.rm = TRUE)
+
+  ## normalise mod
+  #add by YP:first need to change infinite values to NA:
+  # df[[mod]][is.nan(df[[mod]])]<-NA
+  df[[mod]][is.infinite(df[[mod]])]<-NA
+  df[[mod]] <- df[[mod]] *
+    mean(df[[obs]][df[[obs]]>q75_obs], na.rm = TRUE) /
+    mean(df[[mod]][df[[mod]]>q75_mod], na.rm = TRUE)  #YP revised here:some error from Beni's functions
+
+  return(df)
+}
+
+ddf_norm <- ddf %>%
+  group_by(sitename) %>%
+  nest() %>%
+  mutate(data = purrr::map(data, ~norm_to_peak(., "gpp_mod", "gpp_obs"))) %>%
+  mutate(data = purrr::map(data, ~norm_to_peak(., "gpp_lmer", "gpp_obs"))) %>%
+  unnest(data)
+
+### Plot normalised by site
+df_meandoy_norm <- ddf_norm %>%
+  group_by(sitename, doy) %>%
+  dplyr::summarise(across(starts_with("gpp_"), mean, na.rm = TRUE))
+
+#
+df_meandoy_norm %>%
+  filter(!is.nan(gpp_lmer) & !is.infinite(gpp_lmer))%>% ##this filter is important
+  pivot_longer(c(gpp_obs, gpp_mod, gpp_lmer), names_to = "model", values_to = "gpp") %>%
+  mutate(model = fct_relevel(model, "gpp_obs", "gpp_mod", "gpp_lmer")) %>%
+  dplyr::filter((model %in% c( "gpp_obs", "gpp_mod","gpp_lmer"))) %>%  ##only select one model
+  ggplot() +
+  # geom_ribbon(
+  #   aes(x = doy, ymin = obs_min, ymax = obs_max),
+  #   fill = "black",
+  #   alpha = 0.2
+  #   ) +
+  geom_line(aes(x = doy, y = gpp, color = model)) +
+  labs(y = expression( paste("GPP (g C m"^-2, " d"^-1, ")" ) ),
+       x = "DoY") +
+  facet_wrap( ~sitename) +
+  # theme_gray() +
+  scale_color_manual("GPP sources",values = c("gpp_obs" = "black",
+       "gpp_mod" = "red","gpp_lmer"="dodgerblue"),
+                     labels = c("Obervations","P-model","LME"))+
+  theme(
+    legend.text = element_text(size=20),
+    legend.key.size = unit(2, 'lines'),
+    axis.title = element_text(size=24),
+    axis.text = element_text(size = 20),
+    text = element_text(size=24),
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    panel.background = element_rect(colour ="grey",fill="white"),
+    # legend.background = element_blank(),
+    legend.position = c(0.75,0.2)
+  )
+
+##since the GPP predict by GPP seems are not right-->only check the GPP predicted
+##by the lmer model
+df_meandoy_norm %>%
+  filter(!is.nan(gpp_lmer) & !is.infinite(gpp_lmer))%>% ##this filter is important
+  pivot_longer(c(gpp_obs, gpp_mod, gpp_lmer), names_to = "model", values_to = "gpp") %>%
+  mutate(model = fct_relevel(model, "gpp_obs", "gpp_mod", "gpp_lmer")) %>%
+  dplyr::filter((model %in% c( "gpp_obs", "gpp_lmer"))) %>%  ##only select one model
+  ggplot() +
+  # geom_ribbon(
+  #   aes(x = doy, ymin = obs_min, ymax = obs_max),
+  #   fill = "black",
+  #   alpha = 0.2
+  #   ) +
+  geom_line(aes(x = doy, y = gpp, color = model)) +
+  labs(y = expression( paste("GPP (g C m"^-2, " d"^-1, ")" ) ),
+       x = "DoY") +
+  facet_wrap( ~sitename) +
+  # theme_gray() +
+  scale_color_manual("GPP sources",values = c("gpp_obs" = "black",
+      "gpp_lmer"="dodgerblue"),
+                     labels = c("Obervations","LME"))+
+  theme(
+    legend.text = element_text(size=20),
+    legend.key.size = unit(2, 'lines'),
+    axis.title = element_text(size=24),
+    axis.text = element_text(size = 20),
+    text = element_text(size=24),
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    panel.background = element_rect(colour ="grey",fill="white"),
+    # legend.background = element_blank(),
+    legend.position = c(0.75,0.15)
+  )
+##--------------------------
+#Additional check the year variation in CH-Dav:
+##--------------------------
+df_meandoy_norm_Year <- ddf_norm %>%
+  filter(sitename=="CH-Dav")%>%
+  group_by(Year,doy) %>%
+  dplyr::summarise(across(starts_with("gpp_"), mean, na.rm = TRUE))
+#
+df_meandoy_norm_Year %>%
+  filter(!is.nan(gpp_lmer) & !is.infinite(gpp_lmer))%>% ##this filter is important
+  pivot_longer(c(gpp_obs, gpp_mod, gpp_lmer), names_to = "model", values_to = "gpp") %>%
+  mutate(model = fct_relevel(model, "gpp_obs", "gpp_mod", "gpp_lmer")) %>%
+  dplyr::filter((model %in% c( "gpp_obs", "gpp_lmer"))) %>%  ##only select one model
+  ggplot() +
+  # geom_ribbon(
+  #   aes(x = doy, ymin = obs_min, ymax = obs_max),
+  #   fill = "black",
+  #   alpha = 0.2
+  #   ) +
+  geom_line(aes(x = doy, y = gpp, color = model)) +
+  labs(y = expression( paste("GPP (g C m"^-2, " d"^-1, ")" ) ),
+       x = "DoY") +
+  facet_wrap( ~Year) +
+  # theme_gray() +
+  scale_color_manual("GPP sources",values = c("gpp_obs" = "black",
+                                              "gpp_lmer"="dodgerblue"),
+                     labels = c("Obervations","LME"))+
+  theme(
+    legend.text = element_text(size=20),
+    legend.key.size = unit(2, 'lines'),
+    axis.title = element_text(size=24),
+    axis.text = element_text(size = 20),
+    text = element_text(size=24),
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    panel.background = element_rect(colour ="grey",fill="white"),
+    # legend.background = element_blank(),
+    legend.position = c(0.9,0.05)
+  )
+
+
