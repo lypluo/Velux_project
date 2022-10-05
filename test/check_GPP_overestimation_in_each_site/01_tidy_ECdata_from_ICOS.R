@@ -158,7 +158,7 @@ df_all$VPD_F_MDS<-df_all$VPD_F_MDS*100
 setwd("D:/Github/Velux_project/")
 save.path<-"D:/EE_WSL/Data_for_use/Data_from_ICOS_sites/processed_data_from_ICOS/"
 #for the other available sites in FLUXNET2015:
-save(df_all,file=paste0(save.path,"HH_data.RDA"))
+save(df_all,file=paste0(save.path,"HH_data.RDA")) ##GPP unit: umolCO2 m-2 s-1
 
 #----------------------------------------------------
 #c.summary the HH data to daily data:
@@ -210,6 +210,12 @@ df_all_sel_daily<-plyr::ddply(df_all_sel,.(sitename,Date),summarise,
 )
 #check the non NAs in each variable
 apply(df_all_sel_daily[,-c(1:2)],2,function(x){sum(!is.na(x))})
+##convert the carbon flux unit(umolCO2 m-2 s-1 to gC m-2 d-1)
+df_all_sel_daily<-df_all_sel_daily %>%
+  mutate(NEE_mean=NEE_mean*12*24*3600/1000000,
+         GPP_NT_mean=GPP_NT_mean*12*24*3600/1000000,
+         GPP_DT_mean=GPP_DT_mean*12*24*3600/1000000
+         )
 
 #----------------
 #c2.save the preprocessed daily data
