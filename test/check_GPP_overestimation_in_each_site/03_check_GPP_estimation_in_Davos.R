@@ -25,20 +25,20 @@ for (i in 1:length(df.obs_koen$sitename)) {
   df.obs_Datakit<-rbind(df.obs_Datakit,df.temp)
 }
 
-# update in the Oct, 2022-->use the downloaded data from the ICOS2018 datasets:
+# update in the Oct, 2022-->use the downloaded data from the ICOS2018 datasets-->tidy by YP:
 load(file = "D:/EE_WSL/Data_for_use/Data_from_ICOS_sites/processed_data_from_ICOS/Daily_data.RDA")
-df.obs<-df_all_sel_daily
+df.obs_YP<-df_all_sel_daily
 ##compare the df.obs_Datakit and df.obs
 t_1<-df.obs_Datakit %>%
   dplyr::select(sitename,date,gpp)%>%
   mutate(gpp_1=gpp,gpp=NULL)
-t_2<-df.obs%>%
+t_2<-df.obs_YP%>%
   dplyr::select(sitename,Date,GPP_NT_mean)%>%
   mutate(date=as.Date(Date),Date=NULL,gpp_2=GPP_NT_mean,GPP_NT_mean=NULL)
 t_merge<-left_join(t_2,t_1)
 #
-plot(t_merge$gpp_1,t_merge$gpp_2) #since the gpp values from Koen's datasets is strange
-#-->so at the end, using gpp from ICOS2018 processed by me.
+plot(t_merge$gpp_1,t_merge$gpp_2) #the two datasets are not comparable
+abline(0,1,lty=2,col="blue")
 
 #2) for the simulated GPP from P-model:
 df.model<-readRDS(paste0("D:/Github/flux_data_kit/data/p_model_output/","site_based_p-model_output.rds"))
@@ -49,10 +49,10 @@ df.mod<-df.model %>%
 # df<-as.data.frame(df.CH_Dav$forcing)
 # df<-df %>%
 #   mutate(gpp_obs=gpp,gpp=NULL)
-df<-df.obs %>%
-  dplyr::select(sitename,Date:GPP_DT_mean)%>%
-  mutate(date=as.Date(Date),Date=NULL,
-         gpp_obs=GPP_NT_mean
+#using the gpp.obs from the koen's tidy up
+df<-df.obs_Datakit %>%
+  dplyr::select(sitename,date:ppfd)%>%
+  mutate(gpp_obs=gpp,gpp=NULL
          )
 #
 df.model<-c()
@@ -80,6 +80,33 @@ df.model.new<-left_join(df.model,df.fapar)
 df.merge<-left_join(df,df.model.new)
 #save the data:
 save(df.merge,file = "./test/test_datasets/df.merge.RDA")
+###addding a test plot:
+df_meandoy <- df.merge %>%
+  mutate(doy=yday(date))%>%
+  group_by(sitename, doy) %>%
+  dplyr::summarise(across(starts_with("gpp_"), mean, na.rm = TRUE))
+#
+##plot by site:
+df_meandoy %>%
+  pivot_longer(c(gpp_obs, gpp_mod), names_to = "source", values_to = "gpp") %>%
+  #fct_relevel: in tidyverse package
+  ggplot() +
+  # geom_ribbon(
+  #   aes(x = doy, ymin = obs_min, ymax = obs_max),
+  #   fill = "black",
+  #   alpha = 0.2
+  #   ) +
+  geom_line(aes(x = doy, y = gpp, color = source), size = 0.4) +
+  labs(y = expression( paste("GPP (g C m"^-2, " d"^-1, ")" ) ),
+       x = "DOY") +
+  facet_wrap( ~sitename, ncol = 2 ) +    # , labeller = labeller(climatezone = list_rosetta)
+  theme_gray() +
+  theme(legend.position = "bottom") +
+  scale_color_manual(
+    name="GPP source ",
+    values=c("gpp_obs"="black","gpp_mod"="red")
+  )
+
 #-------------------------
 #(2)explore if GPP is overestimated in early spring
 #-------------------------
@@ -93,7 +120,7 @@ source("./R/separate_norm_GPPmismatch_period_trs_diff0_3SD.R")
 df_andPlot_FI_Hyy<-sep_data_indiffY_sepMismatch(df.merge[df.merge$sitename=="FI-Hyy",],
                                                 0.05,"Dfc","ENF","FI-Hyy",c(1996:2018))
 # length(df_andPlot_FI_Hyy$p_isevent)
-# p_diffYears<-df_andPlot$p_isevent
+# p_diffYears<-df_andPlot_FI_Hyy$p_isevent
 # p_merge_1<-plot_grid(p_diffYears[[1]],p_diffYears[[2]],p_diffYears[[3]],
 #                      p_diffYears[[4]],p_diffYears[[5]],p_diffYears[[6]],
 #                      p_diffYears[[7]],p_diffYears[[8]],p_diffYears[[9]],
@@ -130,7 +157,8 @@ library(ingestr)
 df.update<-left_join(df.merge,df.pheno)
 df.update<-df.update %>%
   mutate(sos=sos10)%>%   #set sos=sos10
-  mutate(doy=yday(date),ppfd=PPFD_IN_fullday_mean,temp=Ta_mean,vpd=VPD_day_mean)%>% #update in Oct,2022
+  #！need to check tomorrow for ppfd
+  mutate(doy=yday(date),ppfd=ppfd*100000)%>% #ppfd-->change to unit:umol m-2s-1update in Oct,2022
   mutate(greenup = ifelse(doy > sos & doy < peak, TRUE, FALSE))%>%
   mutate(lue = gpp_obs / (fPAR * ppfd)) %>%
   mutate(lue = remove_outliers(lue)) #using the functions in the ingestr
@@ -185,10 +213,10 @@ summary(mod_lmer_40sites)
 #for the model using the for 4 sites
 ddf_lmer_4sites <- df.update %>%
   mutate(lue_lmer = predict(mod_lmer_4sites, newdata = .)) %>%
-  mutate(gpp_lmer = lue_lmer * fPAR * PPFD_IN_fullday_mean)
+  mutate(gpp_lmer = lue_lmer * fPAR * ppfd)
 ddf_lmer_40sites <- df.update %>%
   mutate(lue_lmer = predict(mod_lmer_40sites, newdata = .)) %>%
-  mutate(gpp_lmer = lue_lmer * fPAR * PPFD_IN_fullday_mean)
+  mutate(gpp_lmer = lue_lmer * fPAR * ppfd)
 
 #compare the modelled gpp with observed gpp
 devtools::load_all("D:/Github/rbeni/")
