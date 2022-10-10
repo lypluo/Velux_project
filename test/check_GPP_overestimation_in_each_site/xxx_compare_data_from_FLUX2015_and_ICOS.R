@@ -17,25 +17,26 @@ df.Beni<-df.Beni%>%
 
 ##b.load merged data processed data(GPP_mod tidied from Koen, 
 #GPP_obs from ICOS datasets tidied by Yunpeng):
-load(paste0("D:/Github/Velux_project/test/test_datasets/df.merge.RDA"))
+load(paste0("D:/Github/Velux_project/test/test_datasets/df.merge.test.RDA"))
 
 ##c.match df.Beni and df.merge to compare the differences(GPP_obs and GPP_mod):
 df.Beni_sel<-df.Beni %>%
-  select(sitename,date,gpp_mod_FULL,gpp_obs)%>%
+  dplyr::select(sitename,date,gpp_mod_FULL,gpp_obs)%>%
   mutate(date=mdy(date))%>%
   mutate(gpp_mod_Beni=gpp_mod_FULL,gpp_obs_Beni=gpp_obs,
          gpp_mod_FULL=NULL,gpp_obs=NULL)
 #
-df.merge_sel<-df.merge %>%
-  select(sitename,date,gpp_mod,gpp_obs)%>%
+df.merge_sel<-df.merge.test %>%
+  dplyr::select(sitename,date,gpp_mod,gpp_obs)%>%
   mutate(gpp_mod_merge=gpp_mod,gpp_obs_merge=gpp_obs,
          gpp_mod=NULL,gpp_obs=NULL)
 #compare the data:
 df.comp<-left_join(df.Beni_sel,df.merge_sel)
 #
 library(ggplot2)
-#I found that the gpp_mod have some difference between different datasets,
-#but gpp_obs has very large differences...
+#I found that the gpp_mod have some difference between 
+#different datasets(but in a reasonable range),
+#but gpp_obs has very large differences(gpp tidied by YP using the ICOS)...
 #for modelled gpp:
 df.comp%>%
   group_by(sitename)%>%
@@ -50,9 +51,11 @@ df.comp%>%
   geom_point()+
   geom_abline(slope = 1,intercept = 0,col="blue",lty=2)+
   facet_wrap(.~sitename)
+
 ##additional check-->using Koen tidied gpp_obs to compare the Beni's dataset
 #!!the results show that the gpp_obs tidied by Koen is much more close to 
-#Beni's data compared mine-->reason need to explore!!
+#Beni's data compared to mine--> so would now use the gpp_obs from Koen to do the analysis:
+# but the reason why the gpp_obs differ a lot between YP and Koen's tidy need to explore!!
 df.drivers<-readRDS(paste0("D:/Github/flux_data_kit/data/p_model_drivers/",
                            "site_based_drivers.rds"))
 # select the sites
@@ -67,7 +70,7 @@ for (i in 1:length(df.obs_koen$sitename)) {
 }
 #
 df.Koen_sel<-df.obs_Datakit %>%
-  select(sitename,date,gpp)%>%
+  dplyr::select(sitename,date,gpp)%>%
   mutate(gpp_obs_Koen=gpp,gpp=NULL)
 #
 df.comp_more<-left_join(df.comp,df.Koen_sel)

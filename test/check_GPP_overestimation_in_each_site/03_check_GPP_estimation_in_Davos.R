@@ -54,6 +54,11 @@ df<-df.obs_Datakit %>%
   dplyr::select(sitename,date:ppfd)%>%
   mutate(gpp_obs=gpp,gpp=NULL
          )
+#also tidy the gpp.obs from the Yunpeng's tidy up
+df_YP<-df.obs_YP %>%
+  dplyr::select(sitename,Date:VPD_day_mean,GPP_NT_mean)%>%
+  mutate(date=as.Date(Date),Date=NULL)%>%
+  mutate(gpp_obs=GPP_NT_mean,GPP_NT_mean=NULL)
 #
 df.model<-c()
 for (i in 1:length(df.mod$sitename)) {
@@ -78,8 +83,20 @@ df.model.new<-left_join(df.model,df.fapar)
 # plot(df.model.new$fPAR_itpl,df.model.new$fapar)
 #
 df.merge<-left_join(df,df.model.new)
-#save the data:
-save(df.merge,file = "./test/test_datasets/df.merge.RDA")
+df.merge.test<-left_join(df_YP,df.model.new) ##also save merged data using gpp_obs tidied by YP:
+#!!save the data:
+# save(df.merge,file = "./test/test_datasets/df.merge.RDA")
+# save(df.merge.test,file = "./test/test_datasets/df.merge.test.RDA")
+##adding a test plot to check what's the differences between ppfd 
+#from Koen's dataset and the datasets tidied by YP:
+df.ppfd_1<-df.merge %>%
+  dplyr::select(sitename,date,ppfd)
+df.ppfd_2<-df.merge.test %>%
+  dplyr::select(sitename,date,PPFD_IN_fullday_mean)
+df.ppfd_test<-left_join(df.ppfd_1,df.ppfd_2)
+##ppfd from Koen's datasets have different unit-->but generally the ppfd is comparable from two datasets
+plot(df.ppfd_test$ppfd*1000000,df.ppfd_test$PPFD_IN_fullday_mean) 
+abline(0,1,lty=2,col="blue")
 ###addding a test plot:
 df_meandoy <- df.merge %>%
   mutate(doy=yday(date))%>%
@@ -107,6 +124,55 @@ df_meandoy %>%
     values=c("gpp_obs"="black","gpp_mod"="red")
   )
 
+##-------------------------
+## Normalise to peak season
+##-------------------------
+norm_to_peak <- function(df, mod, obs){
+  # df<-ddf_t
+  # mod<-"gpp_lmer"
+  # obs<-"gpp_obs"
+  
+  q75_obs <- quantile(df[[obs]], probs = 0.75, na.rm = TRUE)
+  q75_mod <- quantile(df[[mod]], probs = 0.75, na.rm = TRUE)
+  
+  ## normalise mod
+  #add by YP:first need to change infinite values to NA:
+  # df[[mod]][is.nan(df[[mod]])]<-NA
+  df[[mod]][is.infinite(df[[mod]])]<-NA
+  df[[mod]] <- df[[mod]] *
+    mean(df[[obs]][df[[obs]]>q75_obs], na.rm = TRUE) /
+    mean(df[[mod]][df[[mod]]>q75_mod], na.rm = TRUE)  #YP revised here:some error from Beni's functions
+  
+  return(df)
+}
+
+ddf_norm <- df_meandoy %>%  
+  group_by(sitename) %>%
+  nest() %>%
+  mutate(data = purrr::map(data, ~norm_to_peak(., "gpp_mod", "gpp_obs"))) %>%
+  unnest(data)
+##plotting the norm data:
+df_meandoy_norm <- ddf_norm %>%
+  group_by(sitename, doy) %>%
+  dplyr::summarise(across(starts_with("gpp_"), mean, na.rm = TRUE))
+#
+Norm_GPP_comp<-df_meandoy_norm %>%
+  pivot_longer(c(gpp_obs, gpp_mod), names_to = "source", values_to = "gpp") %>%
+  #fct_relevel: in tidyverse package
+  ggplot() +
+  geom_line(aes(x = doy, y = gpp, color = source), size = 0.4) +
+  labs(y = expression( paste("Norm GPP (g C m"^-2, " d"^-1, ")" ) ),
+       x = "DOY") +
+  facet_wrap( ~sitename, ncol = 2 ) +    # , labeller = labeller(climatezone = list_rosetta)
+  theme_light() +
+  theme(legend.position = "bottom") +
+  scale_color_manual(
+    name="GPP sources ",
+    values=c("gpp_obs"="black","gpp_mod"="red")
+  )
+save.path<-"./test/test_figs/"
+ggsave(Norm_GPP_comp,filename = paste0(save.path,"norm_GPP_Pmodl_comp.png"),
+       height = 6,width = 8)
 #-------------------------
 #(2)explore if GPP is overestimated in early spring
 #-------------------------
@@ -144,7 +210,6 @@ df_andPlot_CH_Dav<-sep_data_indiffY_sepMismatch(df.merge[df.merge$sitename=="CH-
 
 ###method 2: comparing EC GPP with GPP simulated by LUE-lme model:
 #first merge the phenophase with df.merge
-#
 df.pheno<-rbind(df_andPlot_FI_Hyy$pos_agg,
                 df_andPlot_NL_Loo$pos_agg,
                 df_andPlot_DE_Tha$pos_agg,
@@ -157,6 +222,7 @@ library(ingestr)
 df.update<-left_join(df.merge,df.pheno)
 df.update<-df.update %>%
   mutate(sos=sos10)%>%   #set sos=sos10
+  # mutate(sos=60)%>%#update 2022,Oct:to simplize the analysis--> set sos=60(March,01)
   #！need to check tomorrow for ppfd
   mutate(doy=yday(date),ppfd=ppfd*100000)%>% #ppfd-->change to unit:umol m-2s-1update in Oct,2022
   mutate(greenup = ifelse(doy > sos & doy < peak, TRUE, FALSE))%>%
@@ -209,7 +275,8 @@ mod_lmer_40sites <- lmer(lue ~ temp+log(vpd) + (1|sitename),
 summary(mod_lmer_40sites)
 
 #predict the gpp using the developed lmer...
-#update from the results:Oct,5-->the results are better in Davos.. 
+#update from the results:Oct,5-->the results are better when using the
+#model built by 4 sites
 #for the model using the for 4 sites
 ddf_lmer_4sites <- df.update %>%
   mutate(lue_lmer = predict(mod_lmer_4sites, newdata = .)) %>%
@@ -245,7 +312,7 @@ df_meandoy %>%
   geom_line(aes(x = doy, y = gpp, color = model), size = 0.4) +
   labs(y = expression( paste("Simulated GPP (g C m"^-2, " d"^-1, ")" ) ),
        x = "DOY") +
-  facet_wrap( ~sitename, ncol = 3 ) +    # , labeller = labeller(climatezone = list_rosetta)
+  facet_wrap( ~sitename, ncol = 2 ) +    # , labeller = labeller(climatezone = list_rosetta)
   theme_gray() +
   theme(legend.position = "bottom") +
   scale_color_manual(
@@ -253,28 +320,7 @@ df_meandoy %>%
     values=c("black", "red", "royalblue")
   )
 
-##-------------------------
-## Normalise to peak season
-##-------------------------
-norm_to_peak <- function(df, mod, obs){
-  # df<-ddf_t
-  # mod<-"gpp_lmer"
-  # obs<-"gpp_obs"
-
-  q75_obs <- quantile(df[[obs]], probs = 0.75, na.rm = TRUE)
-  q75_mod <- quantile(df[[mod]], probs = 0.75, na.rm = TRUE)
-
-  ## normalise mod
-  #add by YP:first need to change infinite values to NA:
-  # df[[mod]][is.nan(df[[mod]])]<-NA
-  df[[mod]][is.infinite(df[[mod]])]<-NA
-  df[[mod]] <- df[[mod]] *
-    mean(df[[obs]][df[[obs]]>q75_obs], na.rm = TRUE) /
-    mean(df[[mod]][df[[mod]]>q75_mod], na.rm = TRUE)  #YP revised here:some error from Beni's functions
-
-  return(df)
-}
-
+##normalize the data
 ddf_norm <- ddf_lmer_4sites %>%  
   group_by(sitename) %>%
   nest() %>%
@@ -320,8 +366,7 @@ df_meandoy_norm %>%
     legend.position = c(0.75,0.2)
   )
 
-##since the GPP predict by GPP seems are not right-->only check the GPP predicted
-##by the lmer model
+##only check the GPP predicted by the lmer model
 df_meandoy_norm %>%
   filter(!is.nan(gpp_lmer) & !is.infinite(gpp_lmer))%>% ##this filter is important
   pivot_longer(c(gpp_obs, gpp_mod, gpp_lmer), names_to = "model", values_to = "gpp") %>%
@@ -334,25 +379,27 @@ df_meandoy_norm %>%
   #   alpha = 0.2
   #   ) +
   geom_line(aes(x = doy, y = gpp, color = model)) +
-  labs(y = expression( paste("GPP (g C m"^-2, " d"^-1, ")" ) ),
+  labs(y = expression( paste("Norm GPP (g C m"^-2, " d"^-1, ")" ) ),
        x = "DoY") +
   facet_wrap( ~sitename) +
   # theme_gray() +
   scale_color_manual("GPP sources",values = c("gpp_obs" = "black",
-      "gpp_lmer"="dodgerblue"),
+      "gpp_lmer"="red"),
                      labels = c("Obervations","LME"))+
-  theme(
-    legend.text = element_text(size=20),
-    legend.key.size = unit(2, 'lines'),
-    axis.title = element_text(size=24),
-    axis.text = element_text(size = 20),
-    text = element_text(size=24),
-    panel.grid.major = element_blank(),
-    panel.grid.minor = element_blank(),
-    panel.background = element_rect(colour ="grey",fill="white"),
-    # legend.background = element_blank(),
-    legend.position = c(0.75,0.15)
-  )
+  theme_light() +
+  theme(legend.position = "bottom") 
+  # theme(
+  #   legend.text = element_text(size=20),
+  #   legend.key.size = unit(2, 'lines'),
+  #   axis.title = element_text(size=24),
+  #   axis.text = element_text(size = 20),
+  #   text = element_text(size=24),
+  #   panel.grid.major = element_blank(),
+  #   panel.grid.minor = element_blank(),
+  #   panel.background = element_rect(colour ="grey",fill="white"),
+  #   # legend.background = element_blank(),
+  #   legend.position = c(0.75,0.15)
+  # )
 ##--------------------------
 #Additional check the year variation in CH-Dav:
 ##--------------------------
@@ -393,4 +440,47 @@ df_meandoy_norm_Year %>%
     legend.position = c(0.9,0.05)
   )
 
+###method 3: comparing EC GPP with GPP simulated by GAM(general additaive model):
+#first merge the phenophase with df.merge
+df.pheno<-rbind(df_andPlot_FI_Hyy$pos_agg,
+                df_andPlot_NL_Loo$pos_agg,
+                df_andPlot_DE_Tha$pos_agg,
+                df_andPlot_CH_Dav$pos_agg)
+df.pheno$Year<-c(c(1996:2018),c(1997:2013),c(1996:2018),c(1997:2018))
+#
+df.merge$Year<-year(df.merge$date)
+#2a. using four sites to develop the gam model 
+library(ingestr)
+df.update<-left_join(df.merge,df.pheno)
+df.update<-df.update %>%
+  mutate(sos=sos10)%>%   #set sos=sos10
+  # mutate(sos=60)%>%#update 2022,Oct:to simplize the analysis--> set sos=60(March,01)
+  #！need to check tomorrow for ppfd
+  mutate(doy=yday(date),ppfd=ppfd*100000)%>% #ppfd-->change to unit:umol m-2s-1update in Oct,2022
+  mutate(greenup = ifelse(doy > sos & doy < peak, TRUE, FALSE))%>%
+  mutate(lue = gpp_obs / (fPAR * ppfd)) %>%
+  mutate(lue = remove_outliers(lue)) #using the functions in the ingestr
 
+##remove the na values and infinite data
+##develop gam model for lue
+tmp_4sites <- df.update %>%
+  dplyr::filter(!greenup) %>%
+  dplyr::filter(ppfd > 5) %>%
+  dplyr::select(temp, vpd,lue, sitename, Year) %>%
+  drop_na() %>%
+  dplyr::filter(!is.infinite(lue) & !is.nan(lue)) %>%
+  dplyr::filter(!is.infinite(temp) & !is.nan(temp)) %>%
+  dplyr::filter(!is.infinite(vpd) & !is.nan(vpd)) %>%
+  # dplyr::filter(!is.infinite(ppfd) & !is.nan(ppfd)) %>%
+  filter(vpd > 0 & lue > 0)
+
+#using the gam model
+library(mgcv)
+mod_gam_4sites<-gam(lue ~ s(temp) +s(log(vpd)), data=tmp_4sites)
+summary(mod_gam_4sites)
+#
+preds<-predict.gam(mod_gam_4sites,newdata=tmp_4sites)
+##does not working for the model
+ddf_gam_4sites <- df.update %>%
+  mutate(lue_gam = predict.gam(mod_gam_4sites, newdata = .)) %>%
+  mutate(gpp_gam = lue_gam * fPAR * ppfd)
