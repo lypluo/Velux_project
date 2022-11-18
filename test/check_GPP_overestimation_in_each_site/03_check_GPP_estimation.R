@@ -71,6 +71,7 @@ for (i in 1:length(df.mod$sitename)) {
 df.model<-df.model%>%
   dplyr::select(sitename,date,fapar,gpp)%>%
   mutate(gpp_mod=gpp,gpp=NULL)
+
 ##update in Oct,05,2022-->as fapar ranges 1 to 1 from Koen's datasets
 ##hence now redownload the fapar from MODIS (MCD15A3H, 500m, 4-day) and linearly
 ##interpolated to the daily values:
@@ -97,54 +98,36 @@ df.ppfd_test<-left_join(df.ppfd_1,df.ppfd_2)
 ##ppfd from Koen's datasets have different unit-->but generally the ppfd is comparable from two datasets
 plot(df.ppfd_test$ppfd*1000000,df.ppfd_test$PPFD_IN_fullday_mean) 
 abline(0,1,lty=2,col="blue")
-###addding a test plot-->update in Nov,2022
-df_meandoy_mean <- df.merge %>%
+###addding a test plot:
+df_meandoy <- df.merge %>%
   mutate(doy=yday(date))%>%
   group_by(sitename, doy) %>%
-  # dplyr::summarise(across(starts_with("gpp_"), mean, na.rm = TRUE))
-  dplyr::summarise(gpp_obs=mean(gpp_obs,na.rm=T),gpp_mod=mean(gpp_mod,na.rm=T))%>%
-  pivot_longer(c(gpp_obs, gpp_mod), names_to = "source", values_to = "gpp")
-
-df_meandoy_sd <- df.merge %>%
-  mutate(doy=yday(date))%>%
-  group_by(sitename, doy) %>%
-  dplyr::summarise(gpp_obs=sd(gpp_obs,na.rm = T),gpp_mod=sd(gpp_mod,na.rm = T))%>%
-  pivot_longer(c(gpp_obs, gpp_mod), names_to = "source", values_to = "gpp_sd")
-
-df_meandoy<-left_join(df_meandoy_mean,df_meandoy_sd)
+  dplyr::summarise(across(starts_with("gpp_"), mean, na.rm = TRUE))
 #
 ##plot by site:
-general_mod_vs_obs<-df_meandoy %>%
-  # pivot_longer(c(gpp_obs_sd,gpp_mod_sd),names_to = "source",values_to = "gpp_sd")
+df_meandoy %>%
+  pivot_longer(c(gpp_obs, gpp_mod), names_to = "source", values_to = "gpp") %>%
   #fct_relevel: in tidyverse package
   ggplot() +
-  geom_ribbon(
-    aes(x = doy, ymin = gpp-gpp_sd, ymax = gpp+gpp_sd,fill = source),
-    alpha = 0.2
-    ) +
+  # geom_ribbon(
+  #   aes(x = doy, ymin = obs_min, ymax = obs_max),
+  #   fill = "black",
+  #   alpha = 0.2
+  #   ) +
   geom_line(aes(x = doy, y = gpp, color = source), size = 0.4) +
   labs(y = expression( paste("GPP (g C m"^-2, " d"^-1, ")" ) ),
        x = "DOY") +
   facet_wrap( ~sitename, ncol = 2 ) +    # , labeller = labeller(climatezone = list_rosetta)
-  theme_light() +
+  theme_gray() +
   theme(legend.position = "bottom") +
   scale_color_manual(
-    name="GPP mean ",
-    values=c("gpp_obs"="black","gpp_mod"="red")
-  )+
-  scale_fill_manual(
-    name="GPP sd",
+    name="GPP source ",
     values=c("gpp_obs"="black","gpp_mod"="red")
   )
-#
-save.path<-"./test/test_figs/"
-ggsave(general_mod_vs_obs,filename = paste0(save.path,"general_mod_vs_obs.png"))
-
 
 ##-------------------------
 ## Normalise to peak season
 ##-------------------------
-#!!update Nov, 2022:normalization has not been updated-->need to be updated if want to use
 norm_to_peak <- function(df, mod, obs){
   # df<-ddf_t
   # mod<-"gpp_lmer"
@@ -191,6 +174,8 @@ Norm_GPP_comp<-df_meandoy_norm %>%
 save.path<-"./test/test_figs/"
 ggsave(Norm_GPP_comp,filename = paste0(save.path,"norm_GPP_Pmodl_comp.png"),
        height = 6,width = 8)
+
+
 #-------------------------
 #(2)explore if GPP is overestimated in early spring
 #-------------------------
@@ -203,21 +188,6 @@ source("./R/separate_norm_GPPmismatch_period_trs_diff0_3SD.R")
 #as now there is no spring gpp overestimation anymore in four sites.
 df_andPlot_FI_Hyy<-sep_data_indiffY_sepMismatch(df.merge[df.merge$sitename=="FI-Hyy",],
                                                 0.05,"Dfc","ENF","FI-Hyy",c(1996:2018))
-# length(df_andPlot_FI_Hyy$p_isevent)
-# p_diffYears<-df_andPlot_FI_Hyy$p_isevent
-# p_merge_1<-plot_grid(p_diffYears[[1]],p_diffYears[[2]],p_diffYears[[3]],
-#                      p_diffYears[[4]],p_diffYears[[5]],p_diffYears[[6]],
-#                      p_diffYears[[7]],p_diffYears[[8]],p_diffYears[[9]],
-#                      p_diffYears[[10]],p_diffYears[[11]],p_diffYears[[12]],
-#                      labels = "auto",ncol=3,label_size = 12,align = "hv")
-# p_merge_2<-plot_grid(p_diffYears[[13]],p_diffYears[[14]],p_diffYears[[15]],
-#                      p_diffYears[[16]],p_diffYears[[17]],
-#                      # p_diffYears[[18]],
-#                      # p_diffYears[[19]],p_diffYears[[20]],p_diffYears[[21]],
-#                      # p_diffYears[[22]],p_diffYears[[23]],p_diffYears[[24]],
-#                      labels = "auto",ncol=3,label_size = 12,align = "hv")
-# plot(p_merge_1)
-# plot(p_merge_2)
 #
 df_andPlot_NL_Loo<-sep_data_indiffY_sepMismatch(df.merge[df.merge$sitename=="NL-Loo",],
                                                 0.05,"Cfb","ENF","NL-Loo",c(1997:2013)) #model GPP only avialble until 2013
@@ -225,6 +195,23 @@ df_andPlot_DE_Tha<-sep_data_indiffY_sepMismatch(df.merge[df.merge$sitename=="DE-
                                                 0.05,"Cfb","ENF","DE-Tha",c(1996:2018))
 df_andPlot_CH_Dav<-sep_data_indiffY_sepMismatch(df.merge[df.merge$sitename=="CH-Dav",],
                                                 0.05,"Dfc","ENF","CH-Dav",c(1997:2018))
+
+length(df_andPlot_CH_Dav$p_isevent)
+p_diffYears<-df_andPlot_CH_Dav$p_isevent
+p_merge_1<-plot_grid(p_diffYears[[1]],p_diffYears[[2]],p_diffYears[[3]],
+                     p_diffYears[[4]],p_diffYears[[5]],p_diffYears[[6]],
+                     p_diffYears[[7]],p_diffYears[[8]],p_diffYears[[9]],
+                     p_diffYears[[10]],p_diffYears[[11]],p_diffYears[[12]],
+                     labels = "auto",ncol=3,label_size = 12,align = "hv")
+p_merge_2<-plot_grid(p_diffYears[[13]],p_diffYears[[14]],p_diffYears[[15]],
+                     p_diffYears[[16]],p_diffYears[[17]],
+                     p_diffYears[[18]],
+                     p_diffYears[[19]],p_diffYears[[20]],p_diffYears[[21]],
+                     p_diffYears[[22]],
+                     # p_diffYears[[23]],
+                     labels = "auto",ncol=3,label_size = 12,align = "hv")
+plot(p_merge_1)
+plot(p_merge_2)
 
 ###method 2: comparing EC GPP with GPP simulated by LUE-lme model:
 #first merge the phenophase with df.merge
@@ -458,7 +445,7 @@ df_meandoy_norm_Year %>%
     legend.position = c(0.9,0.05)
   )
 
-###method 3: comparing EC GPP with GPP simulated by GAM(general additaive model):
+###method 3: comparing EC GPP with GPP simulated by GAM (general additaive model):
 #first merge the phenophase with df.merge
 df.pheno<-rbind(df_andPlot_FI_Hyy$pos_agg,
                 df_andPlot_NL_Loo$pos_agg,
