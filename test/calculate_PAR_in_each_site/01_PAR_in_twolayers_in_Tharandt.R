@@ -151,4 +151,4 @@ df.Rg_sum<-df.Rg_multiY%>%
     )%>%
   mutate(Date_2023=as.Date("2023-01-01")+doy)
 #save the data:
-write.csv(df.Rg_sum,file = paste0("./test/calculate_PAR_in_each_site/","estimated_PAR_weekly.csv"))
+write.csv(df.Rg_sum,file = paste0("./test/calculate_PAR_in_each_site/","estimated_Tharandt_PAR_weekly.csv"))
