@@ -146,8 +146,8 @@ df.Rg_sum<-df.Rg_multiY%>%
   group_by(grp = as.integer(gl(n(),7, n()))) %>% 
   dplyr::summarise(
     doy=median(doy),
-    PAR_est_2m=mean(PAR_est_2m,na.rm=T),
-    PAR_est_26m_approx=mean(PAR_est_37m/f_convert,na.rm=T), #approx the PAR value at 26m using the data in 37m
+    PAR_est_2m=round(mean(PAR_est_2m,na.rm=T),0),
+    PAR_est_26m_approx=round(mean(PAR_est_37m/f_convert,na.rm=T),0), #approx the PAR value at 26m using the data in 37m
     )%>%
   mutate(Date_2023=as.Date("2023-01-01")+doy)
 #save the data:
