@@ -150,5 +150,13 @@ df.Rg_sum<-df.Rg_multiY%>%
     PAR_est_26m_approx=round(mean(PAR_est_37m/f_convert,na.rm=T),0), #approx the PAR value at 26m using the data in 37m
     )%>%
   mutate(Date_2023=as.Date("2023-01-01")+doy)
-#save the data:
+#demonstrated plot:
+g_plot<-df.Rg_sum%>%
+  pivot_longer(c(PAR_est_2m:PAR_est_26m_approx), names_to = "Height", values_to = "PPFD") %>%
+  ggplot(aes(x=doy,y=PPFD,col=Height))+
+  geom_point()+
+  theme_light()
+
+#save the data and demonstrated plot:
 write.csv(df.Rg_sum,file = paste0("./test/calculate_PAR_in_each_site/","estimated_Tharandt_PAR_weekly.csv"))
+ggsave(g_plot,filename = paste0("./test/calculate_PAR_in_each_site/","estimated_Tharandt_weekly_PAR.png"))
