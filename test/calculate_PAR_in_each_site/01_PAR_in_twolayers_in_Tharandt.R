@@ -25,7 +25,7 @@ df_temp<-df_new %>%
   mutate(PAR.wk.average = mean(PAR)) %>%
   ungroup() %>%
   group_by(month = month(date)) %>%
-  mutate(Price.mo.average = mean(PAR))
+  mutate(PAR.mo.average = mean(PAR))
 
 #test:
 ggplot(df_new,aes(x=date,y=PAR))+
