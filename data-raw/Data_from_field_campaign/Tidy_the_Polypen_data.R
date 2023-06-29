@@ -28,6 +28,9 @@ df.Tha<-c()
 table.list<-list.files(paste0(Tha.path,"Polypen/"))
 for (i in 1:length(table.list)) {
   Tha_temp<-read_xlsx(paste0(Tha.path,"Polypen/",table.list[i]))
+  #convert the data format:
+  # Tha_temp<-Tha_temp %>%
+  #   mutate(across(c(`Branch ID`:`PolyPen No.`,NDVI:RDVI)),as.numeric)
   df.Tha<-rbind(df.Tha,Tha_temp)
 }
 
@@ -42,7 +45,7 @@ df.Poly.sel<-df.Poly %>%
   select(ID,NDVI,PRI)%>%
   mutate(sitename=substr(ID,4,6),
          CampaignNum=substr(ID,1,2),
-         Position=substr(ID,11,11))
+         Position=substr(ID,12,12))
 Poly.mean<-df.Poly.sel[,-1]%>%
   group_by(sitename,CampaignNum,Position)%>%
   dplyr::summarise(NDVI.mean=mean(NDVI,na.rm=T),
@@ -58,7 +61,7 @@ df.Poly.sel$NDVI<-as.numeric(df.Poly.sel$NDVI)
 df.Poly.sel$PRI<-as.numeric(df.Poly.sel$PRI)
 
 #NDVI
-df.Poly.sel%>%
+p_NDVI<-df.Poly.sel%>%
   group_by(CampaignNum) %>%
   ggplot(aes(x=Position,y=NDVI,col=sitename,group=sitename))+
   stat_summary(aes(x=Position,y=NDVI,col=sitename),fun.data=mean_sdl, fun.args = list(mult=1),
@@ -70,7 +73,7 @@ df.Poly.sel%>%
         axis.title = element_text(size=16))
 
 #PRI
-df.Poly.sel%>%
+p_PRI<-df.Poly.sel%>%
   group_by(CampaignNum) %>%
   ggplot(aes(x=Position,y=PRI,col=sitename,group=sitename))+
   stat_summary(aes(x=Position,y=PRI,col=sitename),fun.data=mean_sdl, fun.args = list(mult=1),
@@ -80,6 +83,10 @@ df.Poly.sel%>%
   theme_light()+
   theme(axis.text = element_text(size=14),
         axis.title = element_text(size=16))
+
+###save the results:
+ggsave(p_NDVI,filename = paste("./manuscript/NDVI_var_campaigns.png"),width = 9)
+ggsave(p_PRI,filename = paste("./manuscript/PRI_var_campaigns.png"),width = 9)
 
 
 
