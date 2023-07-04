@@ -12,10 +12,10 @@ library(plyr)
 load.path<-"./data/"
 load(paste0(load.path,"WaterPotential.data.RDA"))
 
-##
+##converted to the water potential to negative values
 df.WaterP.sel<-df.WaterP %>%
   mutate(ID=`Branch ID`)%>%
-  mutate(WP_Twig=Twig,WP_Branch=Branch,
+  mutate(WP_Twig= -Twig,WP_Branch= -Branch,
          Twig=NULL,Branch=NULL)%>%
   select(ID,Height,WP_Branch,WP_Twig)%>%
   mutate(sitename=substr(ID,4,6),
