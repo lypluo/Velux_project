@@ -21,6 +21,11 @@ table.list<-list.files(paste0(Dav.path,"WaterPotential/"))
 for (i in 1:length(table.list)) {
   #at this stage, using the water potential without dark adapted:
   Dav_temp<-read_xlsx(paste0(Dav.path,"WaterPotential/",table.list[i]),sheet = "WP1",skip = 3)
+  if(i==6){
+    #as we have several replicates in campaign 6, so we use the mean of these replicates for the analysis:
+  Dav_temp<-Dav_temp %>%
+    select(`Branch ID`,Height,Twig,Branch)
+  }
   df.Dav<-rbind(df.Dav,Dav_temp)
 }
 
@@ -31,7 +36,8 @@ for (i in 1:length(table.list)) {
   Tha_temp<-read_xlsx(paste0(Tha.path,"WaterPotential/",table.list[i]),skip = 2)
   #
   if(i>=4){
-    Tha_temp<-Tha_temp[,-ncol(Tha_temp)]
+    Tha_temp<-Tha_temp %>%
+      select(`Branch ID`,Height,Twig,Branch)
   }
   df.Tha<-rbind(df.Tha,Tha_temp)
 }
