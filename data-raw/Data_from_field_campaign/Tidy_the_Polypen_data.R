@@ -29,8 +29,8 @@ table.list<-list.files(paste0(Tha.path,"Polypen/"))
 for (i in 1:length(table.list)) {
   Tha_temp<-read_xlsx(paste0(Tha.path,"Polypen/",table.list[i]))
   #convert the data format:
-  # Tha_temp<-Tha_temp %>%
-  #   mutate(across(c(`Branch ID`:`PolyPen No.`,NDVI:RDVI)),as.numeric)
+  Tha_temp<-Tha_temp %>%
+    mutate(across(c(`Branch ID`:`PolyPen No.`,NDVI:RDVI)),as.numeric)
   df.Tha<-rbind(df.Tha,Tha_temp)
 }
 
