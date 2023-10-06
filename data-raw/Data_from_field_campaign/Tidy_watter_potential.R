@@ -1,5 +1,5 @@
 ###############################################
-##Aim: tidy the data from the field campaigns 
+##Aim: tidy the water potential data from the field campaigns 
 ###############################################
 library(readxl)
 library(ggplot2)
