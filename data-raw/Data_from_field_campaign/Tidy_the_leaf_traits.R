@@ -23,7 +23,7 @@ leaf.mor.path<-paste0(Dav.path,"Leaf_traits/leaf_area/")
 #aggregate leaf info:leaf area and leaf mass
 leaf.agg.path<-paste0(Dav.path,"Leaf_traits/")
 #
-Campaigns<-c("C1","C2","C3","C4","C5")
+Campaigns<-c("C1","C2","C3","C4","C5","C6")
 for (i in 1:length(Campaigns)) {
   #leaf area and morphometric traits
   Dav_temp1<-read_xlsx(paste0(leaf.mor.path,"DAV_leaf_area_agg.xlsx"),sheet =Campaigns[i])
@@ -43,7 +43,7 @@ leaf.mor.path<-paste0(Tha.path,"Leaf_traits/leaf_area/")
 #aggregate leaf info:leaf area and leaf mass
 leaf.agg.path<-paste0(Tha.path,"Leaf_traits/")
 #
-Campaigns<-c("C1","C2","C3","C4","C5")
+Campaigns<-c("C1","C2","C3","C4","C5","C6")
 for (i in 1:length(Campaigns)) {
   #leaf area and morphometric traits
   Tha_temp1<-read_xlsx(paste0(leaf.mor.path,"THA_leaf_area_agg.xlsx"),sheet =Campaigns[i])

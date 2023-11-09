@@ -89,7 +89,6 @@ for (i in 1:247) {
   c_list <- append(c_list, c)
 }
 
-
 VJmax_all_bilinear<-data.frame(c_list)
 write.csv(VJmax_all_bilinear,"results_frodro_VJmax_all_bllinear.csv")
 

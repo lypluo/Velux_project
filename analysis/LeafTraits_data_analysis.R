@@ -50,8 +50,10 @@ p_SLA<-df.traits.sel%>%
   group_by(CampaignNum) %>%
   ggplot(aes(x=Position,y=SLA,col=sitename,group=sitename))+
   stat_summary(aes(x=Position,y=SLA,col=sitename),fun.data=mean_sdl, fun.args = list(mult=1),
-               geom="pointrange",size=0.8,width=0.2)+
-  geom_point()+
+               geom="pointrange",size=2,linewidth=1.5)+
+  geom_point(size=1.5)+
+  scale_color_manual(values = c("DAV"=adjustcolor("tomato",0.6),
+                                "THA"=adjustcolor("cyan4",0.6)))+
   ylab(expression("SLA (cm"^2*"g"^-1*")"))+
   facet_wrap(~CampaignNum)+
   theme_light()+
@@ -63,8 +65,10 @@ p_LMA<-df.traits.sel%>%
   group_by(CampaignNum) %>%
   ggplot(aes(x=Position,y=LMA,col=sitename,group=sitename))+
   stat_summary(aes(x=Position,y=LMA,col=sitename),fun.data=mean_sdl, fun.args = list(mult=1),
-               geom="pointrange",size=0.8,width=0.2)+
-  geom_point()+
+               geom="pointrange",size=2,linewidth=1.5)+
+  geom_point(size=1.5)+
+  scale_color_manual(values = c("DAV"=adjustcolor("tomato",0.6),
+                                "THA"=adjustcolor("cyan4",0.6)))+
   ylab(expression("LMA (g"*"cm"^-2*")"))+
   facet_wrap(~CampaignNum)+
   theme_light()+
@@ -76,8 +80,10 @@ p_Leaf_length<-df.traits.sel%>%
   group_by(CampaignNum) %>%
   ggplot(aes(x=Position,y=ImageJ_average_length,col=sitename,group=sitename))+
   stat_summary(aes(x=Position,y=ImageJ_average_length,col=sitename),fun.data=mean_sdl, fun.args = list(mult=1),
-               geom="pointrange",size=0.8,width=0.2)+
-  geom_point()+
+               geom="pointrange",size=2,linewidth=1.5)+
+  geom_point(size=1.5)+
+  scale_color_manual(values = c("DAV"=adjustcolor("tomato",0.6),
+                                "THA"=adjustcolor("cyan4",0.6)))+
   ylab(expression("Needle average length (cm)"))+
   facet_wrap(~CampaignNum)+
   theme_light()+
@@ -89,8 +95,10 @@ p_Leaf_width<-df.traits.sel%>%
   group_by(CampaignNum) %>%
   ggplot(aes(x=Position,y=ImageJ_average_width,col=sitename,group=sitename))+
   stat_summary(aes(x=Position,y=ImageJ_average_width,col=sitename),fun.data=mean_sdl, fun.args = list(mult=1),
-               geom="pointrange",size=0.8,width=0.2)+
-  geom_point()+
+               geom="pointrange",size=2,linewidth=1.5)+
+  geom_point(size=1.5)+
+  scale_color_manual(values = c("DAV"=adjustcolor("tomato",0.6),
+                                "THA"=adjustcolor("cyan4",0.6)))+
   ylab(expression("Needle average width (cm)"))+
   facet_wrap(~CampaignNum)+
   theme_light()+
