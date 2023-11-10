@@ -11,7 +11,7 @@ library(photosynthesis)
 # devtools::install_github("zhujiedong/readphoto")
 library(readphoto)
 #----------------------
-#(1)load the data 
+#(1)load the data from LIcor 6800 and LIcor6400
 #----------------------
 base_path<-"D:/EE_WSL/IMPACT_project/data_collection/"
 #for site paths
@@ -74,3 +74,24 @@ for (i in 1:length(campaign.Amax.folder)) {
   }
 
 }
+
+#----------------------
+#(2)load the measured leaf area:
+#----------------------
+load("./data/Leaf_traits.data.RDA")
+#a.selected the leaf traits for two sites
+df.Area<-df.traits %>%
+  filter(Measurement=="Amax")%>%
+  select(c(sample_ID,ImageJ_leaf_area))%>%
+  mutate_at("ImageJ_leaf_area",as.numeric)%>%
+  mutate(LArea=ImageJ_leaf_area,
+         ImageJ_leaf_area=NULL)%>%
+  mutate_at("LArea",round,4)
+#b.unify the format of Amax data:
+#remove the logdata in the string:
+df.Tha_Amax$files<-gsub("_logdata","",df.Tha_Amax$files)
+
+
+  mutate(sample_ID=substr(files,17,25))
+
+
