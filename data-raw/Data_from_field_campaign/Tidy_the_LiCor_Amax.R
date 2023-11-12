@@ -45,9 +45,6 @@ for (i in 1:5) {
 Dav_temp<-read_bat_6400(paste0(Dav.path,"LiCor/",campaign.Amax.folder[6],"/ori_format_files/"),
                           header_line = 17, data_start = 25)
   
-
-
-
 ###############
 #For Tharandt:
 ###############
@@ -79,19 +76,37 @@ for (i in 1:length(campaign.Amax.folder)) {
 #(2)load the measured leaf area:
 #----------------------
 load("./data/Leaf_traits.data.RDA")
-#a.selected the leaf traits for two sites
+#selected the leaf traits for two sites
 df.Area<-df.traits %>%
   filter(Measurement=="Amax")%>%
   select(c(sample_ID,ImageJ_leaf_area))%>%
   mutate_at("ImageJ_leaf_area",as.numeric)%>%
-  mutate(LArea=ImageJ_leaf_area,
+  #name the practical value of leaf area to Sadj(-->corresponding to the S in the orignal name)
+  mutate(S_adj=ImageJ_leaf_area,
          ImageJ_leaf_area=NULL)%>%
-  mutate_at("LArea",round,4)
-#b.unify the format of Amax data:
+  mutate_at("S_adj",round,4)
+#
+df.Tha_Area<-df.Area[grep("THA",df.Area$sample_ID),]
+df.Dav_Area<-df.Area[grep("DAV",df.Area$sample_ID),]
+
+#---------------------------
+#(3)unify the format of Amax data and readjust the measurements with update leaf area
+#---------------------------
+#source the datasets:
+source("./R/Adj_leafA_6800.R")
+
+#---------
+#Tharandt
+#---------
 #remove the logdata in the string:
 df.Tha_Amax$files<-gsub("_logdata","",df.Tha_Amax$files)
-
-
-  mutate(sample_ID=substr(files,17,25))
-
+#remove the "test" measurement in the dataset:
+pos<-grep("_test",df.Tha_Amax$files)
+df.Tha_Amax<-df.Tha_Amax[-pos,]
+#adding the sample_ID in Amax dataset:
+df.Tha_Amax$sample_ID<-toupper(substr(df.Tha_Amax$files,17,27))
+#merge the datasets:
+df.Tha_Amax<-left_join(df.Tha_Amax,df.Tha_Area)
+#recompute the data according to the udpated Area:
+t<-recomp_6800_adjA(df.Tha_Amax,S=df.Tha_Amax$S_adj)
 
