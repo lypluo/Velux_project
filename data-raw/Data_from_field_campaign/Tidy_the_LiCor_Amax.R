@@ -1,9 +1,10 @@
 ###############################################
-##Aim: tidy the Li-cor data from the field campaigns
+##Aim: tidy the Li-cor data(Amax) from the field campaigns
 ###############################################
 library(readxl)
 library(ggplot2)
 library(tidyverse)
+library(dplyr)
 library(plyr)
 #modeling tools for C3 photosynthesis, as well as analytical tools for curve-fitting plant ecophysiology responses
 library(photosynthesis) 
@@ -30,19 +31,19 @@ campaign.Amax.folder<-campaign.folder[grep("amax",campaign.folder)]
 campaign.NPQ.folder<-campaign.folder[grep("NPQ",campaign.folder)]
 
 #A.For Amax data..
-df.Dav_Amax<-c()
+df.Dav_Amax_C1C5<-c()
 #first for campaign 1-5:
 for (i in 1:5) {
   ##For C1-C5:using the LI-cor8600:
     #using the function in readphoto r package:
     #for campaign 3: deleted the duplicated lines in file "2023-04-21-1417_logdata_c3_dav_t3_u_amax"
     Dav_temp<-read_bat_6800(paste0(Dav.path,"LiCor/",campaign.Amax.folder[i],"/ori_format_files/"), data_start = 66)
-    df.Dav_Amax<-rbind(df.Dav_Amax,Dav_temp)
+    df.Dav_Amax_C1C5<-rbind(df.Dav_Amax_C1C5,Dav_temp)
   
 }
 
 ##For C6:using the LI-cor6400:
-Dav_temp<-read_bat_6400(paste0(Dav.path,"LiCor/",campaign.Amax.folder[6],"/ori_format_files/"),
+df.Dav_Amax_C6<-read_bat_6400(paste0(Dav.path,"LiCor/",campaign.Amax.folder[6],"/ori_format_files/"),
                           header_line = 17, data_start = 25)
   
 ###############
@@ -94,7 +95,49 @@ df.Dav_Area<-df.Area[grep("DAV",df.Area$sample_ID),]
 #---------------------------
 #source the datasets:
 source("./R/Adj_leafA_6800.R")
+source("./R/Adj_leafA_6400.R")
+#---------
+#Davos:
+#---------
+##1) For C1-C5: measured with LIcor8600:
+df.Dav_Amax_C1C5$files<-gsub("_logdata","",df.Dav_Amax_C1C5$files)
+#adding the sample_ID in the dataset:
+df.Dav_Amax_C1C5$sample_ID<-toupper(substr(df.Dav_Amax_C1C5$files,17,27))
+#merge the datasets:
+df.Dav_Amax_C1C5<-left_join(df.Dav_Amax_C1C5,df.Dav_Area)
+#recompute the data according to the udpated Area:
+df.Dav_Amax_C1C5_adj<-recomp_6800_adjA(df.Dav_Amax_C1C5,S=df.Dav_Amax_C1C5$S_adj)
+plot(df.Dav_Amax_C1C5$A,df.Dav_Amax_C1C5_adj$A,ylim=c(0,10),xlim=c(0,10))
+abline(0,1,lty=1,col="blue")
 
+##2) For C6: measured with LIcor6400:
+df.Dav_Amax_C6$files<-tolower(paste0("2023-07-17_c6_dav_",substr(df.Dav_Amax_C6$files,13,16),"_amax"))
+#convert "-" to "_"
+df.Dav_Amax_C6$files<-gsub("-","_",df.Dav_Amax_C6$files)
+#adding the sample_ID in the dataset:
+df.Dav_Amax_C6$sample_ID<-toupper(substr(df.Dav_Amax_C6$files,12,22))
+#merge the datasets:
+df.Dav_Amax_C6<-left_join(df.Dav_Amax_C6,df.Dav_Area)
+#recompute the data according to the udpated Area:
+df.Dav_Amax_C6_adj<-recomp_6400_adjA(df.Dav_Amax_C6,S=df.Dav_Amax_C6$S_adj)
+plot(df.Dav_Amax_C6$Photo,df.Dav_Amax_C6_adj$Photo,ylim=c(0,10),xlim=c(0,10))
+abline(0,1,lty=1,col="blue")
+
+##merge the C1-C5 and C6 data:
+#only selected most important variables or known meaning varables
+df.Dav_Amax_C6_adj_sel<-df.Dav_Amax_C6_adj %>%
+  select(c(files,Obs,HHMMSS,Cond,Ci,Trmmol,VpdL,CTleaf,Area,
+           BLCond,Tair,Tleaf,CO2R,CO2S,H2OR,H2OS,Flow,
+           PARi,PARo,sample_ID,S_adj))%>%
+##change the names-->change the names corresponding to LI6800:
+  #refer the variable names in Licor8600 and 6400
+  mutate(obs=as.numeric(Obs),hhmmss=HHMMSS,gsw=Cond,E=Trmmol,VPDleaf=VpdL,
+         TleafEB=CTleaf,S=Area,gbw=BLCond,Qin=PARi)%>%
+  mutate(Obs=NULL,HHMMSS=NULL,Cond=NULL,Trmmol=NULL,
+         VpdL=NULL,CTleaf=NULL,Area=NULL,BLCond=NULL,PARi=NULL)
+##
+df.Dav_Amax_adj<-bind_rows(df.Dav_Amax_C1C5_adj,df.Dav_Amax_C6_adj_sel)
+  
 #---------
 #Tharandt
 #---------
@@ -108,5 +151,12 @@ df.Tha_Amax$sample_ID<-toupper(substr(df.Tha_Amax$files,17,27))
 #merge the datasets:
 df.Tha_Amax<-left_join(df.Tha_Amax,df.Tha_Area)
 #recompute the data according to the udpated Area:
-t<-recomp_6800_adjA(df.Tha_Amax,S=df.Tha_Amax$S_adj)
+df.Tha_Amax_adj<-recomp_6800_adjA(df.Tha_Amax,S=df.Tha_Amax$S_adj)
 
+
+#----------------------
+#(4)save the data
+#----------------------
+save.path<-"./data/LIcor/"
+save(df.Tha_Amax_adj,file=paste0(save.path,"df.Tha_Amax.RDA"))
+save(df.Dav_Amax_adj,file=paste0(save.path,"df.Dav_Amax.RDA"))

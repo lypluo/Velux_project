@@ -10,7 +10,7 @@ recomp_6800_adjA<-function (df, S = 6, K = 0.5)
   df$A = df$Flow * df$CorrFact * (df$CO2_r - df$CO2_s * (1000 - 
                                                            df$CorrFact * df$H2O_r)/(1000 - df$CorrFact * df$H2O_s))/(100 * 
                                                                                                                        S)
-  df$gbw = df$blfa_3 + df$blfa_2 * S + df$blfa_1 * S * S
+  # df$gbw = df$blfa_3 + df$blfa_2 * S + df$blfa_1 * S * S -->For Davos, did not have the measurements for blfa_3/_2/_1
   df$gtw = df$E * (1000 - (1000 * 0.61365 * exp(17.502 * df$TleafCnd/(240.97 + 
                                                                         df$TleafCnd))/(df$Pa + df$VPcham) + df$H2O_s)/2)/(1000 * 
                                                                                                                             0.61365 * exp(17.502 * df$TleafCnd/(240.97 + df$TleafCnd))/(df$Pa + 
