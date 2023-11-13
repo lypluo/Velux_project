@@ -1,5 +1,5 @@
 ###############################################
-##Aim: tidy the Li-cor data(Amax) from the field campaigns
+##Aim: tidy the Li-cor data(NPQ) from the field campaigns
 ###############################################
 library(readxl)
 library(ggplot2)
@@ -27,48 +27,47 @@ Tha.path<-paste0(base_path,"Tha_Data/")
 df.Dav<-c()
 campaign.folder<-list.files(paste0(Dav.path,"LiCor/"))
 #temporarily select the campaign 1-5:C1-C5
-campaign.Amax.folder<-campaign.folder[grep("amax",campaign.folder)]
+# campaign.Amax.folder<-campaign.folder[grep("amax",campaign.folder)]
 campaign.NPQ.folder<-campaign.folder[grep("NPQ",campaign.folder)]
 
 #A.For Amax data..
-df.Dav_Amax_C1C5<-c()
+df.Dav_NPQ_C1C5<-c()
 #first for campaign 1-5:
 for (i in 1:5) {
   ##For C1-C5:using the LI-cor8600:
     #using the function in readphoto r package:
     #for campaign 3: deleted the duplicated lines in file "2023-04-21-1417_logdata_c3_dav_t3_u_amax"
-    Dav_temp<-read_bat_6800(paste0(Dav.path,"LiCor/",campaign.Amax.folder[i],"/ori_format_files/"), data_start = 66)
-    df.Dav_Amax_C1C5<-rbind(df.Dav_Amax_C1C5,Dav_temp)
+    Dav_temp<-read_bat_6800(paste0(Dav.path,"LiCor/",campaign.NPQ.folder[i],"/ori_format_files/"), data_start = 66)
+    df.Dav_NPQ_C1C5<-rbind(df.Dav_NPQ_C1C5,Dav_temp)
   
 }
 
 ##For C6:using the LI-cor6400:
-df.Dav_Amax_C6<-read_bat_6400(paste0(Dav.path,"LiCor/",campaign.Amax.folder[6],"/ori_format_files/"),
-                          header_line = 17, data_start = 25)
-  
+#-->there is no specific NPQ measurements for Davos at 6th campaign
+
 ###############
 #For Tharandt:
 ###############
 df.Tha<-c()
 campaign.folder<-list.files(paste0(Tha.path,"LiCor/"))
 #temporarily select the campaign 1-5:C1-C5
-campaign.Amax.folder<-campaign.folder[grep("amax",campaign.folder)]
+# campaign.Amax.folder<-campaign.folder[grep("amax",campaign.folder)]
 campaign.NPQ.folder<-campaign.folder[grep("NPQ",campaign.folder)]
 
 #A.For Amax data..
-df.Tha_Amax<-c()
-for (i in 1:length(campaign.Amax.folder)) {
+df.Tha_NPQ<-c()
+for (i in 1:length(campaign.NPQ.folder)) {
   #For C1-C5:using the LI-cor8600 from Arthur's group
   #For C6: using the LI-cor8600 from Tarek's group
   #for campaign 6: deleted the duplicated lines in file "2023-07-13-1104_logdata_c6_tha_t1_l_amax"
   #using the function in readphoto r package:
   if(i<=5){
-  Tha_temp<-read_bat_6800(paste0(Tha.path,"LiCor/",campaign.Amax.folder[i],"/ori_format_files/"), data_start = 66)
-  df.Tha_Amax<-rbind(df.Tha_Amax,Tha_temp)
+  Tha_temp<-read_bat_6800(paste0(Tha.path,"LiCor/",campaign.NPQ.folder[i],"/ori_format_files/"), data_start = 66)
+  df.Tha_NPQ<-rbind(df.Tha_NPQ,Tha_temp)
   }
   if(i==6){
-  Tha_temp<-read_bat_6800(paste0(Tha.path,"LiCor/",campaign.Amax.folder[i],"/ori_format_files/"), data_start = 61)
-  df.Tha_Amax<-bind_rows(df.Tha_Amax,Tha_temp)
+  Tha_temp<-read_bat_6800(paste0(Tha.path,"LiCor/",campaign.NPQ.folder[i],"/ori_format_files/"), data_start = 56)
+  df.Tha_NPQ<-bind_rows(df.Tha_NPQ,Tha_temp)
   }
 
 }
@@ -126,17 +125,15 @@ abline(0,1,lty=1,col="blue")
 ##merge the C1-C5 and C6 data:
 #only selected most important variables or known meaning varables
 df.Dav_Amax_C6_adj_sel<-df.Dav_Amax_C6_adj %>%
-  select(c(files,Obs,HHMMSS,Photo,Cond,Ci,Trmmol,VpdL,CTleaf,Area,
+  select(c(files,Obs,HHMMSS,Cond,Ci,Trmmol,VpdL,CTleaf,Area,
            BLCond,Tair,Tleaf,CO2R,CO2S,H2OR,H2OS,Flow,
            PARi,PARo,sample_ID,S_adj))%>%
 ##change the names-->change the names corresponding to LI6800:
   #refer the variable names in Licor8600 and 6400
-  mutate(obs=as.numeric(Obs),hhmmss=HHMMSS,A=Photo,gsw=Cond,E=Trmmol,VPDleaf=VpdL,
-         TleafEB=CTleaf,S=Area,gbw=BLCond,Qin=PARi,
-         CO2_r=CO2R,CO2_s=CO2S,H2O_r=H2OR,H2O_s=H2OS)%>%
-  mutate(Obs=NULL,HHMMSS=NULL,Photo=NULL,Cond=NULL,Trmmol=NULL,
-         VpdL=NULL,CTleaf=NULL,Area=NULL,BLCond=NULL,PARi=NULL,
-         CO2R=NULL,CO2S=NULL,H2OR=NULL,H2OS=NULL)
+  mutate(obs=as.numeric(Obs),hhmmss=HHMMSS,gsw=Cond,E=Trmmol,VPDleaf=VpdL,
+         TleafEB=CTleaf,S=Area,gbw=BLCond,Qin=PARi)%>%
+  mutate(Obs=NULL,HHMMSS=NULL,Cond=NULL,Trmmol=NULL,
+         VpdL=NULL,CTleaf=NULL,Area=NULL,BLCond=NULL,PARi=NULL)
 ##
 df.Dav_Amax_adj<-bind_rows(df.Dav_Amax_C1C5_adj,df.Dav_Amax_C6_adj_sel)
   
