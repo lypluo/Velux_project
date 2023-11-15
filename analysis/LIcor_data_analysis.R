@@ -120,6 +120,9 @@ LRC_DAV<-fit_LRC_curves_Dav |>
 #----------------------
 #(4)##Plot model fit and raw data
 #----------------------
+###########
+#A.plotting light response curve
+###########
 plot_LRC_fun<-function(df,df.Tha,df.Dav,CamN,xlab,ylab,legend){
   #dataset:
   # df<-dat
@@ -249,12 +252,66 @@ p5<-plot_LRC_fun(dat,LRC_THA,LRC_DAV,"C5",TRUE,FALSE,FALSE)
 p6<-plot_LRC_fun(dat,LRC_THA,LRC_DAV,"C6",FALSE,FALSE,FALSE)
 #merge the plots:
 library(cowplot)
-plot_grid(p1,p2,p3,
+p_Amax<-plot_grid(p1,p2,p3,
           p4,p5,p6,align = "hv")
 
-
 ###save the plots:
-# ggsave(p_SLA,filename = paste("./manuscript/SLA_var_campaigns.png"),width = 9)
-# ggsave(p_LMA,filename = paste("./manuscript/LMA_var_campaigns.png"),width = 9)
-# ggsave(p_Leaf_width,filename = paste("./manuscript/Leaf_width_var_campaigns.png"),width = 9)
+ggsave(p_Amax,filename = paste("./manuscript/Amax_var_campaigns.png"),
+       width = 10,height = 8)
+###########
+#B.plotting other variables
+###########
+#specifically: E(transpiration rate); stomatal conductance to water vapor(gsw);
+#gtc: Total conductance to CO2
+df.physio<-df.Amax.merge %>%
+  #Gs:stomatal conductance-->refer to Tang et al., 2022:
+  #https://nph.onlinelibrary.wiley.com/doi/full/10.1111/nph.18649
+  mutate(Gs=E*VPDleaf/Pa)%>%
+  select(sitename,ID,CampaignNum,Position,Gs,E,gsw,gtc)
 
+plot_physio<-function(df,plot_var){
+  # df<-df.physio
+  # plot_var<-"Gs"
+  
+  #
+  df.sel<-df[,c("sitename","ID","CampaignNum","Position",plot_var)]
+  names(df.sel)<-c("sitename","ID","CampaignNum","Position","y")
+  
+  p_plot<-df.sel%>%
+    group_by(CampaignNum) %>%
+    ggplot(aes(x=Position,y=y,col=sitename,group=sitename))+
+    geom_point(size=1.5)+
+    stat_summary(aes(x=Position,y=y,col=sitename),fun.data=mean_sdl, fun.args = list(mult=1),
+                 geom="pointrange",size=3,linewidth=4)+
+    scale_color_manual(values = c("DAV"=adjustcolor("tomato",0.5),
+                                  "THA"=adjustcolor("cyan4",0.5)))+
+    facet_wrap(~CampaignNum)+
+    theme_light()+
+    theme(axis.text = element_text(size=14),
+          axis.title = element_text(size=16))
+  #
+  if(plot_var=="Gs"){
+    p_plot<-p_plot+
+      ylab(expression(Gs ~ "(" * mol ~ m^{-2} ~ s^{-1} * ")"))
+  }
+
+  if(plot_var=="E"){
+    p_plot<-p_plot+
+    ylab(expression(Transpiration ~ "(" * mol ~ m^{-2} ~ s^{-1} * ")"))
+  }
+  #
+  if(plot_var=="gsw"){
+    p_plot<-p_plot+
+      ylab(expression(Gsw ~ "(" * mol ~ m^{-2} ~ s^{-1} * ")"))
+  }
+ return(p_plot) 
+}
+###plotting
+plot_E<-plot_physio(df.physio,"E")
+plot_Gs<-plot_physio(df.physio,"Gs")
+
+#save the plots:
+ggsave(plot_E,filename = paste("./manuscript/transpiration_campaigns.png"),
+       width = 9,height = 6)
+ggsave(plot_Gs,filename = paste("./manuscript/Gs_campaigns.png"),
+       width = 9,height = 6)

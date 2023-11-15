@@ -126,16 +126,18 @@ abline(0,1,lty=1,col="blue")
 ##merge the C1-C5 and C6 data:
 #only selected most important variables or known meaning varables
 df.Dav_Amax_C6_adj_sel<-df.Dav_Amax_C6_adj %>%
-  select(c(files,Obs,HHMMSS,Photo,Cond,Ci,Trmmol,VpdL,CTleaf,Area,
+  select(c(files,Obs,HHMMSS,Photo,Cond,Ci,Trmmol,VpdL,Press,CTleaf,Area,
            BLCond,Tair,Tleaf,CO2R,CO2S,H2OR,H2OS,Flow,
            PARi,PARo,sample_ID,S_adj))%>%
 ##change the names-->change the names corresponding to LI6800:
   #refer the variable names in Licor8600 and 6400
-  mutate(obs=as.numeric(Obs),hhmmss=HHMMSS,A=Photo,gsw=Cond,E=Trmmol,VPDleaf=VpdL,
-         TleafEB=CTleaf,S=Area,gbw=BLCond,Qin=PARi,
+  mutate(obs=as.numeric(Obs),hhmmss=HHMMSS,A=Photo,gsw=Cond,
+         #unit conversion for E between Licor8600 and Licor6400
+         E=Trmmol/1000,
+         VPDleaf=VpdL,Pa=Press,TleafEB=CTleaf,S=Area,gbw=BLCond,Qin=PARi,
          CO2_r=CO2R,CO2_s=CO2S,H2O_r=H2OR,H2O_s=H2OS)%>%
   mutate(Obs=NULL,HHMMSS=NULL,Photo=NULL,Cond=NULL,Trmmol=NULL,
-         VpdL=NULL,CTleaf=NULL,Area=NULL,BLCond=NULL,PARi=NULL,
+         VpdL=NULL,Press=NULL,CTleaf=NULL,Area=NULL,BLCond=NULL,PARi=NULL,
          CO2R=NULL,CO2S=NULL,H2OR=NULL,H2OS=NULL)
 ##
 df.Dav_Amax_adj<-bind_rows(df.Dav_Amax_C1C5_adj,df.Dav_Amax_C6_adj_sel)
@@ -162,3 +164,4 @@ df.Tha_Amax_adj<-recomp_6800_adjA(df.Tha_Amax,S=df.Tha_Amax$S_adj)
 save.path<-"./data/LIcor/"
 df.Amax<-list(Tha=df.Tha_Amax_adj,Dav=df.Dav_Amax_adj)
 save(df.Amax,file=paste0(save.path,"df.Amax.RDA"))
+
