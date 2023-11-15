@@ -36,7 +36,8 @@ df.Dav_NPQ_C1C5<-c()
 for (i in 1:5) {
   ##For C1-C5:using the LI-cor8600:
     #using the function in readphoto r package:
-    #for campaign 3: deleted the duplicated lines in file "2023-04-21-1417_logdata_c3_dav_t3_u_amax"
+    #for campaign 3: deleted the duplicated lines in file "2023-04-21-1417_logdata_c3_dav_t3_u_npq"
+    #for campaign 4: remove the additional text in npq files
     Dav_temp<-read_bat_6800(paste0(Dav.path,"LiCor/",campaign.NPQ.folder[i],"/ori_format_files/"), data_start = 66)
     df.Dav_NPQ_C1C5<-rbind(df.Dav_NPQ_C1C5,Dav_temp)
   
@@ -59,6 +60,7 @@ df.Tha_NPQ<-c()
 for (i in 1:length(campaign.NPQ.folder)) {
   #For C1-C5:using the LI-cor8600 from Arthur's group
   #For C6: using the LI-cor8600 from Tarek's group
+  #For C5: remove the dupliated lines in npq files
   #for campaign 6: deleted the duplicated lines in file "2023-07-13-1104_logdata_c6_tha_t1_l_amax"
   #using the function in readphoto r package:
   if(i<=5){
@@ -66,11 +68,23 @@ for (i in 1:length(campaign.NPQ.folder)) {
   df.Tha_NPQ<-rbind(df.Tha_NPQ,Tha_temp)
   }
   if(i==6){
+  #change data type in df.Tha_NPQ data.frame:
+  all_chr_vars<-c("files","date","hhmmss",
+                  "LightAdaptedID","DarkAdaptedID","DarkPulseID","Geometry")
+  pos_all<-match(all_chr_vars,names(df.Tha_NPQ))
+  df.Tha_NPQ[,-pos_all]<-apply(df.Tha_NPQ[,-pos_all], 2,as.numeric)
+   
   Tha_temp<-read_bat_6800(paste0(Tha.path,"LiCor/",campaign.NPQ.folder[i],"/ori_format_files/"), data_start = 56)
   df.Tha_NPQ<-bind_rows(df.Tha_NPQ,Tha_temp)
   }
 
 }
+
+###working to here!
+
+
+
+
 
 #----------------------
 #(2)load the measured leaf area:
