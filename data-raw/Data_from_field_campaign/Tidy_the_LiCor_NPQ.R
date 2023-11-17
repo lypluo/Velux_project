@@ -45,7 +45,7 @@ for (i in 1:5) {
 
 ##For C6:using the LI-cor6400:
 #-->there is no specific NPQ measurements for Davos at 6th campaign
-
+df.Dav_NPQ<-df.Dav_NPQ_C1C5
 ###############
 #For Tharandt:
 ###############
@@ -80,96 +80,29 @@ for (i in 1:length(campaign.NPQ.folder)) {
 
 }
 
-###working to here!
-
-
-
-
-
-#----------------------
-#(2)load the measured leaf area:
-#----------------------
-load("./data/Leaf_traits.data.RDA")
-#selected the leaf traits for two sites
-df.Area<-df.traits %>%
-  filter(Measurement=="Amax")%>%
-  select(c(sample_ID,ImageJ_leaf_area))%>%
-  mutate_at("ImageJ_leaf_area",as.numeric)%>%
-  #name the practical value of leaf area to Sadj(-->corresponding to the S in the orignal name)
-  mutate(S_adj=ImageJ_leaf_area,
-         ImageJ_leaf_area=NULL)%>%
-  mutate_at("S_adj",round,4)
-#
-df.Tha_Area<-df.Area[grep("THA",df.Area$sample_ID),]
-df.Dav_Area<-df.Area[grep("DAV",df.Area$sample_ID),]
-
 #---------------------------
-#(3)unify the format of Amax data and readjust the measurements with update leaf area
+#(3)tidy the data format
 #---------------------------
-#source the datasets:
-source("./R/Adj_leafA_6800.R")
-source("./R/Adj_leafA_6400.R")
 #---------
 #Davos:
 #---------
 ##1) For C1-C5: measured with LIcor8600:
-df.Dav_Amax_C1C5$files<-gsub("_logdata","",df.Dav_Amax_C1C5$files)
+df.Dav_NPQ$files<-gsub("_logdata","",df.Dav_NPQ$files)
 #adding the sample_ID in the dataset:
-df.Dav_Amax_C1C5$sample_ID<-toupper(substr(df.Dav_Amax_C1C5$files,17,27))
-#merge the datasets:
-df.Dav_Amax_C1C5<-left_join(df.Dav_Amax_C1C5,df.Dav_Area)
-#recompute the data according to the udpated Area:
-df.Dav_Amax_C1C5_adj<-recomp_6800_adjA(df.Dav_Amax_C1C5,S=df.Dav_Amax_C1C5$S_adj)
-plot(df.Dav_Amax_C1C5$A,df.Dav_Amax_C1C5_adj$A,ylim=c(0,10),xlim=c(0,10))
-abline(0,1,lty=1,col="blue")
+df.Dav_NPQ$sample_ID<-toupper(substr(df.Dav_NPQ$files,17,27))
 
-##2) For C6: measured with LIcor6400:
-df.Dav_Amax_C6$files<-tolower(paste0("2023-07-17_c6_dav_",substr(df.Dav_Amax_C6$files,13,16),"_amax"))
-#convert "-" to "_"
-df.Dav_Amax_C6$files<-gsub("-","_",df.Dav_Amax_C6$files)
-#adding the sample_ID in the dataset:
-df.Dav_Amax_C6$sample_ID<-toupper(substr(df.Dav_Amax_C6$files,12,22))
-#merge the datasets:
-df.Dav_Amax_C6<-left_join(df.Dav_Amax_C6,df.Dav_Area)
-#recompute the data according to the udpated Area:
-df.Dav_Amax_C6_adj<-recomp_6400_adjA(df.Dav_Amax_C6,S=df.Dav_Amax_C6$S_adj)
-plot(df.Dav_Amax_C6$Photo,df.Dav_Amax_C6_adj$Photo,ylim=c(0,10),xlim=c(0,10))
-abline(0,1,lty=1,col="blue")
-
-##merge the C1-C5 and C6 data:
-#only selected most important variables or known meaning varables
-df.Dav_Amax_C6_adj_sel<-df.Dav_Amax_C6_adj %>%
-  select(c(files,Obs,HHMMSS,Cond,Ci,Trmmol,VpdL,CTleaf,Area,
-           BLCond,Tair,Tleaf,CO2R,CO2S,H2OR,H2OS,Flow,
-           PARi,PARo,sample_ID,S_adj))%>%
-##change the names-->change the names corresponding to LI6800:
-  #refer the variable names in Licor8600 and 6400
-  mutate(obs=as.numeric(Obs),hhmmss=HHMMSS,gsw=Cond,E=Trmmol,VPDleaf=VpdL,
-         TleafEB=CTleaf,S=Area,gbw=BLCond,Qin=PARi)%>%
-  mutate(Obs=NULL,HHMMSS=NULL,Cond=NULL,Trmmol=NULL,
-         VpdL=NULL,CTleaf=NULL,Area=NULL,BLCond=NULL,PARi=NULL)
-##
-df.Dav_Amax_adj<-bind_rows(df.Dav_Amax_C1C5_adj,df.Dav_Amax_C6_adj_sel)
-  
 #---------
 #Tharandt
 #---------
 #remove the logdata in the string:
-df.Tha_Amax$files<-gsub("_logdata","",df.Tha_Amax$files)
-#remove the "test" measurement in the dataset:
-pos<-grep("_test",df.Tha_Amax$files)
-df.Tha_Amax<-df.Tha_Amax[-pos,]
-#adding the sample_ID in Amax dataset:
-df.Tha_Amax$sample_ID<-toupper(substr(df.Tha_Amax$files,17,27))
-#merge the datasets:
-df.Tha_Amax<-left_join(df.Tha_Amax,df.Tha_Area)
-#recompute the data according to the udpated Area:
-df.Tha_Amax_adj<-recomp_6800_adjA(df.Tha_Amax,S=df.Tha_Amax$S_adj)
 
+df.Tha_NPQ$files<-gsub("_logdata","",df.Tha_NPQ$files)
+#adding the sample_ID in NPQ dataset:
+df.Tha_NPQ$sample_ID<-toupper(substr(df.Tha_NPQ$files,17,27))
 
 #----------------------
-#(4)save the data
+#(3)save the data
 #----------------------
 save.path<-"./data/LIcor/"
-df.Amax<-list(Tha=df.Tha_Amax_adj,Dav=df.Dav_Amax_adj)
-save(df.Amax,file=paste0(save.path,"df.Amax.RDA"))
+df.NPQ<-list(Tha=df.Tha_NPQ,Dav=df.Dav_NPQ)
+save(df.NPQ,file=paste0(save.path,"df.NPQ.RDA"))

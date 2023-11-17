@@ -270,8 +270,8 @@ df.physio<-df.Amax.merge %>%
   select(sitename,ID,CampaignNum,Position,Gs,E,gsw,gtc)
 
 plot_physio<-function(df,plot_var){
-  df<-df.physio
-  plot_var<-"NPQ"
+  # df<-df.physio
+  # plot_var<-"NPQ"
   
   #
   df.sel<-df[,c("sitename","ID","CampaignNum","Position",plot_var)]
