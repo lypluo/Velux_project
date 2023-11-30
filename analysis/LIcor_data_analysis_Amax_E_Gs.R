@@ -49,13 +49,14 @@ library(purrr)
 fit_LRC<-function(df,site,CamN,Pos){
   # df<-dat
   # site<-"DAV"
-  # CamN<-"C6"
-  # Pos<-"L"
+  # CamN<-"C5"
+  # Pos<-"U"
   
   df.sel<-df %>%
     filter(sitename==site) %>%
     filter(CampaignNum == CamN)%>%
-    filter(Position == Pos)
+    filter(Position == Pos)%>%
+    filter(A>0)
   
   fit = fit_photosynthesis(
     .data = filter(df.sel,group == 400),
@@ -89,7 +90,8 @@ LRC_THA<-fit_LRC_curves_Tha |>
   map(coef) |>
   map(t) |>
   map(as.data.frame) |>
-  imap_dfr(~ mutate(.x, ID = .y))
+  imap_dfr(~ mutate(.x, ID = .y))%>%
+  mutate(sitename="THA")
 
 ##----------------
 #B. For Davos
@@ -115,7 +117,15 @@ LRC_DAV<-fit_LRC_curves_Dav |>
   map(coef) |>
   map(t) |>
   map(as.data.frame) |>
-  imap_dfr(~ mutate(.x, ID = .y))
+  imap_dfr(~ mutate(.x, ID = .y))%>%
+  mutate(sitename="DAV")
+
+#-------------------------------
+#save the LRC fitting parameters
+#-------------------------------
+df.LRC.paras<-rbind(LRC_THA,LRC_DAV)
+save.path<-"./data/LIcor/"
+save(df.LRC.paras,file = paste0(save.path,"LRC.parameters.RDA"))
 
 #----------------------
 #(4)##Plot model fit and raw data
@@ -149,7 +159,8 @@ plot_LRC_fun<-function(df,df.Tha,df.Dav,CamN,xlab,ylab,legend){
   para = rbind(df.Tha_sel,df.Dav_sel) 
   #original data:
   df_sel<-df %>%
-    filter(CampaignNum==CamN)
+    filter(CampaignNum==CamN)%>%
+    filter(A>0)
   
   #
   df_predict=list()
@@ -267,7 +278,8 @@ df.physio<-df.Amax.merge %>%
   #Gs:stomatal conductance-->refer to Tang et al., 2022:
   #https://nph.onlinelibrary.wiley.com/doi/full/10.1111/nph.18649
   mutate(Gs=E*VPDleaf/Pa)%>%
-  select(sitename,ID,CampaignNum,Position,Gs,E,gsw,gtc)
+  select(sitename,ID,CampaignNum,Position,Gs,E,gsw,gtc)%>%
+  filter(Gs>0 & E>0)
 
 plot_physio<-function(df,plot_var){
   # df<-df.physio
