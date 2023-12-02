@@ -40,8 +40,14 @@ dat<-df.Amax.merge %>%
   select(sitename,ID,CampaignNum,Position,Qin,A,CO2_s)%>%
   mutate(group = round(CO2_s, digits = 0)) |>
   #round sequentially due to CO2_s set points
-  mutate(group = as.factor(round(group, digits = -2)))
-
+  mutate(group = as.factor(round(group, digits = -2)))%>%
+  ##filter the data that does not make sense:
+  #A-->A>0
+  filter(A>0)%>%
+  mutate(A=ifelse(sitename=="THA"&CampaignNum=="C2"&A>12,NA,A))
+##save the cleaned data:
+save.path<-"./data/LIcor/"
+save(dat,file = paste0(save.path,"df.Amax.cleaned.RDA"))
 
 # Fit light-response curves
 library(purrr)
@@ -52,11 +58,20 @@ fit_LRC<-function(df,site,CamN,Pos){
   # CamN<-"C5"
   # Pos<-"U"
   
+  
   df.sel<-df %>%
     filter(sitename==site) %>%
     filter(CampaignNum == CamN)%>%
     filter(Position == Pos)%>%
     filter(A>0)
+  #for THA-->C2 measured A is too high-->outlier-->filter A<13
+  if(site=="THA" & CamN=="C2"){
+  df.sel<-df.sel %>%
+    filter(sitename==site) %>%
+    filter(CampaignNum == CamN)%>%
+    filter(Position == Pos)%>%
+    filter(A>0 & A<12)
+  }
   
   fit = fit_photosynthesis(
     .data = filter(df.sel,group == 400),
@@ -280,6 +295,8 @@ df.physio<-df.Amax.merge %>%
   mutate(Gs=E*VPDleaf/Pa)%>%
   select(sitename,ID,CampaignNum,Position,Gs,E,gsw,gtc)%>%
   filter(Gs>0 & E>0)
+##save the data:
+save(df.physio,file = paste0("./data/LIcor/Gs_E.cleaned.RDA"))
 
 plot_physio<-function(df,plot_var){
   # df<-df.physio
