@@ -33,6 +33,12 @@ df.NPQ.merge<-df.NPQ.merge %>%
   mutate(ID=`sample_ID`)%>%
   mutate(CampaignNum=substr(ID,1,2),
          Position=substr(ID,11,11))
+#
+df.NPQ.merge<-df.NPQ.merge %>%
+  select(sitename,CampaignNum,Position,Fv,Fv.,Fv.Fm,Fv..Fm.,
+         NPQ,qN,qN_Fo)
+#save the data:
+save(df.NPQ.merge,file = paste0("./data/LIcor/df.NPQ.cleaned.RDA"))
 
 #----------------------
 #(3)##Plotting

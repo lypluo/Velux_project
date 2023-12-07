@@ -40,7 +40,9 @@ Traits.mean<-df.traits.sel%>%
                    Leaf_width.mean=mean(ImageJ_average_width,na.rm = T),
                    Leaf_width.sd=sd(ImageJ_average_width,na.rm = T)
   )
-
+##save the data:
+save.path<-"./data/"
+save(df.traits.sel,file=paste0(save.path,"Leaf_traits.data.cleaned.RDA"))
 #----------------------
 #(2)plotting
 #----------------------

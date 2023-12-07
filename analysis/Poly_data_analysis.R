@@ -43,13 +43,15 @@ df.Poly.sel<-df.Poly.sel %>%
                         c(sitename=="DAV" & CampaignNum=="C5") ~"2023-05-22",
                         c(sitename=="DAV" & CampaignNum=="C6") ~"2023-07-17"
          ))
-
+#
+df.Poly.sel$NDVI<-as.numeric(df.Poly.sel$NDVI)
+df.Poly.sel$PRI<-as.numeric(df.Poly.sel$PRI)
+#save the data:
+save.path<-"./data/"
+save(df.Poly.sel,file=paste0(save.path,"Polypen.data.cleaned.RDA"))
 #----------------------
 #(2)plotting
 #----------------------
-df.Poly.sel$NDVI<-as.numeric(df.Poly.sel$NDVI)
-df.Poly.sel$PRI<-as.numeric(df.Poly.sel$PRI)
-
 #NDVI
 p_NDVI<-df.Poly.sel%>%
   group_by(CampaignNum) %>%

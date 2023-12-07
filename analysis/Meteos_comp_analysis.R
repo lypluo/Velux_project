@@ -41,7 +41,8 @@ df.Tha_sel<-df.Tha%>%
         VPD=VPD_F,VPD_F=NULL,
         TS_1=TS_F_MDS_1,TS_F_MDS_1=NULL,
         SWC_1=SWC_F_MDS_1,SWC_F_MDS_1=NULL,
-        P_F=NULL
+        #change precipitation name
+        P=P_F,P_F=NULL,
         )%>%
   #normalization of SWC
   mutate(SWC_Norm=SWC_1/SWC.Tha.q95)%>%
@@ -49,14 +50,17 @@ df.Tha_sel<-df.Tha%>%
 
 #
 df.all<-bind_rows(df.Tha_sel,df.Dav_sel)
-
+#change sitename:
+df.all<-df.all %>%
+  mutate(sitename=case_when(c(sitename=="THA") ~"DE-Tha",
+                                 c(sitename=="DAV") ~"CH-Dav"))
 #----------
 #(3)plotting:
 #----------
 #function:
 plot_fun<-function(df,var,x_f,legend_f){
   # df<-df.all
-  # var<-"TA"
+  # var<-"P"
   # x_f=FALSE
   # legend_f=FALSE
   
@@ -68,11 +72,11 @@ plot_fun<-function(df,var,x_f,legend_f){
   #plotting
   #
   df_sel_Tha_Samp<-df_sel %>%
-    filter(sitename=="THA")%>%
+    filter(sitename=="DE-Tha")%>%
     filter(Date %in% as.Date(c("2023-03-02","2023-03-22","2023-04-13",
                                "2023-04-28","2023-05-17","2023-07-14")))
   df_sel_Dav_Samp<-df_sel %>%
-    filter(sitename=="DAV")%>%
+    filter(sitename=="CH-Dav")%>%
     filter(Date %in% as.Date(c("2023-03-08","2023-03-27","2023-04-21",
                                "2023-05-03","2023-05-22","2023-07-17")))
   
@@ -83,19 +87,28 @@ plot_fun<-function(df,var,x_f,legend_f){
     xlab("2023")+
     geom_point(aes(Date,y),data=df_sel_Tha_Samp,col="cyan4",size=5)+
     geom_point(aes(Date,y),data=df_sel_Dav_Samp,col="tomato",size=5)+
-    scale_color_manual(values = c("DAV"=adjustcolor("tomato",0.6),
-                       "THA"=adjustcolor("cyan3",0.6)))+
+    scale_color_manual(values = c("CH-Dav"=adjustcolor("tomato",0.6),
+                       "DE-Tha"=adjustcolor("cyan3",0.6)))+
     theme_light()+
-    theme(legend.position = c(0.8,0.25),
+    theme(legend.position = c(0.8,0.2),
           legend.title = element_blank(),
           legend.text = element_text(size = 18),
           legend.background = element_blank(),
-          axis.text = element_text(size=16)
+          axis.text = element_text(size=20),
+          axis.title = element_text(size=24)
           )
   ##########
   if(var=="TA"){
     df_plot<-df_plot+
       ylab(expression("Ta ("* "°C)"))+
+      annotate(geom="text",x=df_sel_Tha_Samp$Date,y=df_sel_Tha_Samp$y+2,
+               label=paste0("C",1:6),col="cyan4",size=5)+
+      annotate(geom="text",x=df_sel_Dav_Samp$Date,y=df_sel_Dav_Samp$y+2,
+               label=paste0("C",1:6),col="tomato",size=5)
+  }
+  if(var=="P"){
+    df_plot<-df_plot+
+      ylab(expression("P (mm)"))+
       annotate(geom="text",x=df_sel_Tha_Samp$Date,y=df_sel_Tha_Samp$y+2,
                label=paste0("C",1:6),col="cyan4",size=5)+
       annotate(geom="text",x=df_sel_Dav_Samp$Date,y=df_sel_Dav_Samp$y+2,
@@ -119,7 +132,7 @@ plot_fun<-function(df,var,x_f,legend_f){
   }
   if(var=="PPFD_IN"|var=="PPFD_OUT"|var=="PPFD_DIF"){
     df_plot<-df_plot+
-      ylab(expression("PPFD ("*mu*"mol m"^-2*s^-1))+
+      ylab(expression("PAR ("*mu*"mol m"^-2*s^-1*")"))+
       annotate(geom="text",x=df_sel_Tha_Samp$Date,y=df_sel_Tha_Samp$y+50,
                label=paste0("C",1:6),col="cyan4",size=5)+
       annotate(geom="text",x=df_sel_Dav_Samp$Date,y=df_sel_Dav_Samp$y+50,
@@ -163,6 +176,7 @@ plot_fun<-function(df,var,x_f,legend_f){
 }
 #
 p_TA<-plot_fun(df.all,"TA",FALSE,TRUE)
+p_P<-plot_fun(df.all,"P",FALSE,FALSE)
 p_SW_IN<-plot_fun(df.all,"SW_IN",FALSE,FALSE)
 p_VPD<-plot_fun(df.all,"VPD",FALSE,FALSE)
 p_PAR<-plot_fun(df.all,"PPFD_IN",FALSE,FALSE)
@@ -177,3 +191,8 @@ plot_merge<-plot_grid(p_TA,p_PAR,p_TS,p_SWC_Norm,p_Snow,ncol=1,align = "hv")
 save.path<-"./manuscript/"
 ggsave(plot_merge,filename = paste0(save.path,"Meteo.png"),height = 11,width = 12)
 
+##adding for AGU:
+p_TA<-plot_fun(df.all,"TA",TRUE,TRUE)
+p_PAR<-plot_fun(df.all,"PPFD_IN",TRUE,FALSE)
+plot_AGU<-plot_grid(p_TA,p_PAR)
+ggsave(plot_AGU,filename = paste0(save.path,"Meteo_AGU.png"),height = 3.5,width = 12)

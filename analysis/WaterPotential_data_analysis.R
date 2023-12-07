@@ -45,6 +45,9 @@ df.WaterP.sel<-df.WaterP.sel %>%
                         c(sitename=="DAV" & CampaignNum=="C5") ~"2023-05-22",
                         c(sitename=="DAV" & CampaignNum=="C6") ~"2023-07-17"
   ))
+#save the data
+save.path<-"./data/"
+save(df.WaterP.sel,file=paste0(save.path,"WaterPotential.data.cleaned.RDA"))
 #----------------------
 #(2)plotting
 #----------------------
