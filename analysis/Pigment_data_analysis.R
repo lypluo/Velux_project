@@ -39,3 +39,25 @@ p_CartoCab_ratio<-df.Pigment%>%
 ###save the results:
 ggsave(p_CartoCab_ratio,filename = paste("./manuscript/CartoCab_ratio_Campaigns.png"))
 
+#ratio of Chla/Chlb:
+#suggestions from Liyao-->higher ratio of Chla/Chb-->high light protection
+p_CartoCab_ratio<-df.Pigment%>%
+  group_by(CampaignNum) %>%
+  ggplot(aes(x=Position,y=Cha/Chb,col=sitename,group=sitename))+
+  stat_summary(aes(x=Position,y=CartoCab_ratio,col=sitename),fun.data=mean_sdl, fun.args = list(mult=1),
+               geom="pointrange",size=2,linewidth=1.1)+
+  geom_point()+
+  scale_color_manual(values = c("DAV"=adjustcolor("tomato",0.5),
+                                "THA"=adjustcolor("cyan4",0.5)))+
+  facet_wrap(~CampaignNum)+
+  ylim(0.1,0.95)+
+  ylab(expression("Chla/Chlb"))+
+  ##adding the sampling dates:
+  geom_text(x=1,y=0.2,aes(x=Position,y=CartoCab_ratio,group=sitename,label=Date),
+            data = df.Pigment[df.Pigment$sitename=="THA",])+
+  geom_text(x=1,y=0.14,aes(x=Position,y=CartoCab_ratio,group=sitename,label=Date),
+            data = df.Pigment[df.Pigment$sitename=="DAV",])+
+  theme_light()+
+  theme(axis.text = element_text(size=14),
+        axis.title = element_text(size=16))
+

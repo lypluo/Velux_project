@@ -45,6 +45,7 @@ dat<-df.Amax.merge %>%
   #A-->A>0
   filter(A>0)%>%
   mutate(A=ifelse(sitename=="THA"&CampaignNum=="C2"&A>12,NA,A))
+
 ##save the cleaned data:
 save.path<-"./data/LIcor/"
 save(dat,file = paste0(save.path,"df.Amax.cleaned.RDA"))

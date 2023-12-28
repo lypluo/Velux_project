@@ -42,6 +42,13 @@ df.NPQ.merge<-df.NPQ.merge %>%
          #qN,qP-->Two competing processes that quench (decrease) the level of chlorophyll fluorescence
          #in the leaf are referred to as photochemical (qP) and non-photochemical (qN) quenching.
          NPQ,PS2.1,PhiPS2,qL,qN,qN_Fo,qP,qP_Fo)%>%
+  #filter the data--replace "0" to NA
+  mutate(across(Fv:qP_Fo),~na_if(.x,0))%>%
+  # mutate(across(c(Fv..Fm.,NPQ)),~na_if(.x,x<=0.01))%>%
+  mutate(Fv..Fm.=ifelse(Fv..Fm.<=0.01,NA,Fv..Fm.),
+         NPQ=ifelse(NPQ<=0.01,NA,NPQ),
+         PhiPS2=ifelse(PhiPS2<=0.01,NA,PhiPS2)
+         )%>%
   #additionally add parameters:ratio between qN and qP(qN/QP)
   mutate(qN.qP=qN/qP,qN_Fo.qP_Fo=qN_Fo/qP_Fo)
 #save the data:
@@ -104,7 +111,7 @@ plot_qN<-plot_physio(df.NPQ.merge,"qN")
 plot_qN_Fo<-plot_physio(df.NPQ.merge,"qN_Fo")
 #additional variables:
 plot_qL<-plot_physio(df.NPQ.merge,"qL")+
-  ylab(expression("qL"))
+  ylab(expression("qL"))+ylim(0,10)
 plot_qP<-plot_physio(df.NPQ.merge,"qP")+
   ylab(expression("qP"))
 plot_qP_Fo<-plot_physio(df.NPQ.merge,"qP_Fo")+
@@ -133,7 +140,8 @@ plot_PSIIandI<-plot_grid(plot_PS2.1,plot_PhiPS2,ncol=2)
 plot_qNtoqP<-plot_grid(plot_qN.qP,plot_qN_Fo.qP_Fo,ncol=2)
 #further tidy:
 #put the Fv/Fm, PhiPS2,and qN/qP together
-plot_PSII_effienciy<-plot_grid(plot_FvFm,plot_PhiPS2,plot_qN.qP,ncol=3)
+plot_PSII_effienciy<-plot_grid(plot_FvFm,plot_PhiPS2,plot_NPQ,
+                               plot_qN.qP,ncol=2,nrow=2)
 #
 # ggsave(plot_FvtoFm,filename = paste("./manuscript/FvFm_campaigns.png"),
 #        width = 9,height = 6)
