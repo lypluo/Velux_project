@@ -140,11 +140,11 @@ plot_point_fun<-function(df,var_name,legend.xy){
   p_var_Date<-df%>%
     ggplot(aes(x=Date,y=y,col=sitename,shape=Position))+
     geom_point(size=3)+
-    geom_line(size=1.2)+
+    geom_line(size=1.2,lty=2)+
     # stat_summary(aes(x=Date,y=k_sat,col=sitename),fun.data=mean_sdl, fun.args = list(mult=1),
     #              geom="pointrange",size=3,linewidth=4)+
-    scale_color_manual(values = c("DAV"=adjustcolor("tomato",0.5),
-                                  "THA"=adjustcolor("cyan4",0.5)))+
+    scale_color_manual(values = c("DAV"=adjustcolor("tomato",0.8),
+                                  "THA"=adjustcolor("cyan4",0.8)))+
     labs(color = "Sitename")+
     # labs(
     #   # x = expression("Irradiance (" * mu * mol ~ m^{-2} ~ s^{-1} * ")"),
@@ -213,6 +213,8 @@ plot_boxplot_fun<-function(df,var_name,legend.xy){
     scale_color_manual(values = c("DAV"=adjustcolor("tomato",0.5),
                                   "THA"=adjustcolor("cyan4",0.5)))+
     labs(fill = "Sitename")+
+    ##separate the campaigns-adding in Jan, 2024
+    geom_vline(xintercept = c(2.5,4.5,6.5,8.5,10.5),lty=2)+
     theme_bw()+
     theme(axis.text = element_text(size=14),
           axis.title = element_text(size=16),
@@ -284,14 +286,16 @@ ggsave(p_Meteo_Date,filename = paste("./manuscript/Summary_Vars_with_Time/P_Mete
 ##-------------
 #LIcor data
 ##-------------
+library(ggforce) #-->draw circle in the plot
 #1) Amax:
 p_Amax_Date<-plot_point_fun(df.merge_Amax,"k_sat",c(0.8,0.25))+
   labs(
     # x = expression("Irradiance (" * mu * mol ~ m^{-2} ~ s^{-1} * ")"),
     y = expression(A[max] ~ "(" * mu * mol ~ m^{-2} ~ s^{-1} * ")")
-  )
+  )+
+  geom_circle(aes(x0=as.Date("2023-07-14"),y0=9,r=1.1),inherit.aes = FALSE,size=1.1,color="black")
 #save the plot:
-ggsave(p_Amax_Date,filename = paste("./manuscript/Summary_Vars_with_Time/P_Amax_time.png"),width = 9)
+ggsave(p_Amax_Date,filename = paste("./manuscript/Summary_Vars_with_Time/P_Amax_time.png"))
 
 #2) A:
 p_A_Date<-plot_boxplot_fun(df.merge_A,"A",c(0.1,0.9))+
@@ -326,28 +330,56 @@ df.merge_FvFm_NPQ_qN<-df.merge_FvFm_NPQ_qN %>%
   filter(Fv.Fm>0 & NPQ >0)
 p_Fv.Fm_Date<-plot_boxplot_fun(df.merge_FvFm_NPQ_qN,"Fv.Fm",c(0.1,0.9))+
   labs(
-    x="2023",
+    x="",
     # x = expression("Irradiance (" * mu * mol ~ m^{-2} ~ s^{-1} * ")"),
     y = expression("Fv/Fm")
-  )
+  )+
+  theme(axis.text.x = element_blank(),legend.position = c(0.4,0.3))
+p_PhiPS2_Date<-plot_boxplot_fun(df.merge_FvFm_NPQ_qN,"PhiPS2",c(0.8,0.2))+
+  labs(
+    x="",
+    y = (expression(phi[PSII]))
+  )+
+  theme(legend.position = "none",
+        axis.text.x = element_blank()
+        )
 p_NPQ_Date<-plot_boxplot_fun(df.merge_FvFm_NPQ_qN,"NPQ",c(0.1,0.9))+
   labs(
-    x="2023",
+    x="",
     y = expression("NPQ")
-  )
+  )+
+  theme(legend.position = "none",
+    axis.text.x = element_blank())
 p_qN_Date<-plot_point_fun_meansd(df.merge_FvFm_NPQ_qN,"qN",c(0.8,0.2))+
   labs(
     x="2023",
     y = expression("qN")
   )
+p_qNtoqP_Date<-plot_boxplot_fun(df.merge_FvFm_NPQ_qN,"qN.qP",c(0.8,0.2))+
+  labs(
+    x="2023",
+    y = expression("qN/qP")
+  )+ylim(0,9)+
+  theme(legend.position = "none")
+
 #save the plot:
 ggsave(p_Fv.Fm_Date,filename = paste("./manuscript/Summary_Vars_with_Time/P_Fv.Fm_time.png"),width = 9)
 ggsave(p_NPQ_Date,filename = paste("./manuscript/Summary_Vars_with_Time/P_NPQ_time.png"),width = 9)
 ggsave(p_qN_Date,filename = paste("./manuscript/Summary_Vars_with_Time/P_qN_time.png"),width = 9)
 
+#merge the plots:
+p_physio_merge<-plot_grid(p_Fv.Fm_Date,p_PhiPS2_Date,p_NPQ_Date,p_qNtoqP_Date,
+          ncol = 1,align = "v",labels = c("A","B","C","D"))
+ggsave(p_physio_merge,filename = paste("./manuscript/Summary_Vars_with_Time/P_physio_merge.png"),
+       width = 8,height = 10)
+
+
 ##-------------
 #Pigments data
 ##-------------
+#adding pigments ratios
+df.merge_Pigments<-df.merge_Pigments %>%
+  mutate(ChatoChb=Cha/Chb)
 #1) Car/Cab
 p_CartoCab_Date<-plot_point_fun_meansd(df.merge_Pigments,"CartoCab_ratio",c(0.1,0.9))+
   labs(
@@ -383,12 +415,24 @@ p_Car_Date<-plot_point_fun_meansd(df.merge_Pigments,"Car",c(0.9,0.9))+
     # x = expression("Irradiance (" * mu * mol ~ m^{-2} ~ s^{-1} * ")"),
     y = expression("Car (mg g"^-1*")")
   )
+#addtional plots:
+#theorotically, if ratio of Cha/Chb high-->higher light photoprotection according to Liyao
+#but the results did not reflect this 
+p_ChatoChb_Date<-plot_point_fun_meansd(df.merge_Pigments,"Car",c(0.9,0.9))+
+  labs(
+    x="2023",
+    # x = expression("Irradiance (" * mu * mol ~ m^{-2} ~ s^{-1} * ")"),
+    y = expression("Chla/Chb")
+  )
 #save the plot:
 ggsave(p_CartoCab_Date,filename = paste("./manuscript/Summary_Vars_with_Time/P_CartoCab_time.png"),width = 9)
 ggsave(p_Cha_Date,filename = paste("./manuscript/Summary_Vars_with_Time/P_Cha_time.png"),width = 9)
 ggsave(p_Chb_Date,filename = paste("./manuscript/Summary_Vars_with_Time/P_Chb_time.png"),width = 9)
 ggsave(p_Cab_Date,filename = paste("./manuscript/Summary_Vars_with_Time/P_Cab_time.png"),width = 9)
 ggsave(p_Car_Date,filename = paste("./manuscript/Summary_Vars_with_Time/P_Car_time.png"),width = 9)
+#merge the plots:
+p_pigments_merge<-plot_grid(p_Cab_Date,p_Car_Date,p_CartoCab_Date,nrow=1)
+
 
 ##-------------
 #leaf spectral data
@@ -410,6 +454,10 @@ p_PRI_Date<-plot_point_fun_meansd(df.Poly.sepctra,"PRI",c(0.1,0.1))+
 #save the plot:
 ggsave(p_NDVI_Date,filename = paste("./manuscript/Summary_Vars_with_Time/P_NDVI_time.png"),width = 9)
 ggsave(p_PRI_Date,filename = paste("./manuscript/Summary_Vars_with_Time/P_PRI_time.png"),width = 9)
+#merge the plots:
+p_VIs_merge<-plot_grid(p_NDVI_Date,p_PRI_Date)
+
+
 
 ##-------------
 #leaf water potential

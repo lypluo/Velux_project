@@ -90,7 +90,7 @@ plot_fun<-function(df,var,x_f,legend_f){
     scale_color_manual(values = c("CH-Dav"=adjustcolor("tomato",0.6),
                        "DE-Tha"=adjustcolor("cyan3",0.6)))+
     theme_light()+
-    theme(legend.position = c(0.8,0.2),
+    theme(legend.position = c(0.9,0.25),
           legend.title = element_blank(),
           legend.text = element_text(size = 18),
           legend.background = element_blank(),
@@ -124,11 +124,20 @@ plot_fun<-function(df,var,x_f,legend_f){
   }
   if(var=="SW_IN"){
     df_plot<-df_plot+
-      ylab(expression("SW_IN (W m"^-2*")"))
+      ylab(expression("SW"[IN]*" (W m"^-2*")"))+
+      annotate(geom="text",x=df_sel_Tha_Samp$Date,y=df_sel_Tha_Samp$y+10,
+               label=paste0("C",1:6),col="cyan4",size=5)+
+      annotate(geom="text",x=df_sel_Dav_Samp$Date,y=df_sel_Dav_Samp$y+10,
+               label=paste0("C",1:6),col="tomato",size=5)
   }
   if(var=="VPD"){
     df_plot<-df_plot+
-      ylab(expression("VPD (hPa)"))
+      ylab(expression("VPD (hPa)"))+
+      annotate(geom="text",x=df_sel_Tha_Samp$Date,y=df_sel_Tha_Samp$y+1,
+               label=paste0("C",1:6),col="cyan4",size=5)+
+      annotate(geom="text",x=df_sel_Dav_Samp$Date,y=df_sel_Dav_Samp$y+1,
+               label=paste0("C",1:6),col="tomato",size=5)
+    
   }
   if(var=="PPFD_IN"|var=="PPFD_OUT"|var=="PPFD_DIF"){
     df_plot<-df_plot+
@@ -140,7 +149,7 @@ plot_fun<-function(df,var,x_f,legend_f){
   }
   if(var=="SWC_1"){
     df_plot<-df_plot+
-      ylab(expression("SWC"))+
+      ylab(expression("SWC(%)"))+
       annotate(geom="text",x=df_sel_Tha_Samp$Date,y=df_sel_Tha_Samp$y+2,
                label=paste0("C",1:6),col="cyan4",size=5)+
       annotate(geom="text",x=df_sel_Dav_Samp$Date,y=df_sel_Dav_Samp$y+2,
@@ -181,15 +190,18 @@ p_SW_IN<-plot_fun(df.all,"SW_IN",FALSE,FALSE)
 p_VPD<-plot_fun(df.all,"VPD",FALSE,FALSE)
 p_PAR<-plot_fun(df.all,"PPFD_IN",FALSE,FALSE)
 p_TS<-plot_fun(df.all,"TS_1",FALSE,FALSE)
-p_SWC<-plot_fun(df.all,"SWC_1",FALSE,FALSE)
+p_SWC<-plot_fun(df.all,"SWC_1",TRUE,FALSE)
 p_SWC_Norm<-plot_fun(df.all,"SWC_Norm",FALSE,FALSE)
 p_Snow<-plot_fun(df.all,"D_SNOW",TRUE,FALSE)
 #merge the plots:
 library(cowplot)
 plot_merge<-plot_grid(p_TA,p_PAR,p_TS,p_SWC_Norm,p_Snow,ncol=1,align = "hv")
+plot_merge_new<-plot_grid(p_TA,p_PAR,p_VPD,p_TS,p_SWC,ncol=1,align = "hv",labels = "auto",
+                          label_x = 0.12,label_y = 1)
+
 #save the plot
 save.path<-"./manuscript/"
-ggsave(plot_merge,filename = paste0(save.path,"Meteo.png"),height = 11,width = 12)
+ggsave(plot_merge_new,filename = paste0(save.path,"Meteo.png"),height = 11.5,width = 12)
 
 ##adding for AGU:
 p_TA<-plot_fun(df.all,"TA",TRUE,TRUE)
