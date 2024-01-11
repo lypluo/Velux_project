@@ -1,5 +1,5 @@
 #------------------------------------------------------
-#Aim: tidy the meteorological data from two sites: DAV and THA
+#Aim: tidy the meteorological and fluxes data from two sites: DAV and THA
 #------------------------------------------------------
 #original data download from the ICOS website:
 library(tidyverse)
@@ -21,7 +21,10 @@ df.Tha.daily<-df.Tha %>%
   select(TIMESTAMP,TA_F,SW_IN_F,VPD_F,P_F,PPFD_IN,
          PPFD_OUT,PPFD_DIF,TS_F_MDS_1:TS_F_MDS_5,
          SWC_F_MDS_1:SWC_F_MDS_4,
-         NEE_VUT_REF,RECO_NT_VUT_REF,GPP_NT_VUT_REF)%>%
+         NEE_VUT_REF,RECO_NT_VUT_REF,GPP_NT_VUT_REF,
+         #adding Jan, 2024:(LE)
+         LE_F_MDS
+         )%>%
   mutate(Date=ymd(TIMESTAMP))
 df.Tha.daily[df.Tha.daily==-9999]<-NA
 
@@ -58,56 +61,70 @@ df.Tha.daily$P_F[P_pos]<-sub_df$P_F
 ###################
 #as Davos does not have updated processed Meteo data-->processing the data from
 #relatively raw data(L1 data)
-
 ##A.load the meterological data
-df.Dav<-read.csv(paste0(base.path,"Meteo_download/ICOSETC_CH-Dav_METEO_NRT/",
-                        "ICOSETC_CH-Dav_METEO_NRT.csv"))
-#select variables:
-df.Dav<-df.Dav %>%
-  select(TIMESTAMP_START,TIMESTAMP_END,SW_IN,P,PPFD_IN,PPFD_OUT,PPFD_DIF,
-         SWC_1:SWC_7,TA:TA_6,TS_1:TS_8,VPD:VPD_6)%>%
-  mutate(Date=ymd_hm(TIMESTAMP_END))%>%
-  select(!ends_with("_SD")&!starts_with("WD_")&!ends_with("_N")&!starts_with("WS_"))
+# df.Dav<-read.csv(paste0(base.path,"Meteo_download/ICOSETC_CH-Dav_METEO_NRT/",
+#                         "ICOSETC_CH-Dav_METEO_NRT.csv"))
+# #select variables:
+# df.Dav<-df.Dav %>%
+#   select(TIMESTAMP_START,TIMESTAMP_END,SW_IN,P,PPFD_IN,PPFD_OUT,PPFD_DIF,
+#          SWC_1:SWC_7,TA:TA_6,TS_1:TS_8,VPD:VPD_6)%>%
+#   mutate(Date=ymd_hm(TIMESTAMP_END))%>%
+#   select(!ends_with("_SD")&!starts_with("WD_")&!ends_with("_N")&!starts_with("WS_"))
 #plotting variables:
-plot_fun<-function(df,var_name){
-  # df<-df.Dav
-  # var_name<-"SWC"
-  
-  #
-  df_sel<-df %>%
-    select(Date,starts_with(var_name))
-  df_sel[df_sel==-9999]<-NA
-  #
-  df_plot<-df_sel %>%
-    pivot_longer(starts_with(var_name), names_to = "depth", values_to = "y") %>% 
-    ggplot(aes(x=Date,y=y,col=depth))+
-    geom_line()+
-    ylab(var_name)
-  return(df_plot)
-}
-# plot_fun(df.Dav,"TA")
-# plot_fun(df.Dav,"P")
-# plot_fun(df.Dav,"VPD")
-# plot_fun(df.Dav,"SWC")
-# plot_fun(df.Dav,"TS")
+# plot_fun<-function(df,var_name){
+#   # df<-df.Dav
+#   # var_name<-"SWC"
+#   
+#   #
+#   df_sel<-df %>%
+#     select(Date,starts_with(var_name))
+#   df_sel[df_sel==-9999]<-NA
+#   #
+#   df_plot<-df_sel %>%
+#     pivot_longer(starts_with(var_name), names_to = "depth", values_to = "y") %>% 
+#     ggplot(aes(x=Date,y=y,col=depth))+
+#     geom_line()+
+#     ylab(var_name)
+#   return(df_plot)
+# }
+# # plot_fun(df.Dav,"TA")
+# # plot_fun(df.Dav,"P")
+# # plot_fun(df.Dav,"VPD")
+# # plot_fun(df.Dav,"SWC")
+# # plot_fun(df.Dav,"TS")
+# 
+# #finalize selecting variables:
+# df.Dav.daily<-df.Dav %>%
+#   #only selected the TS and SWC in the first layer
+#   select(Date,SW_IN,P,PPFD_IN:PPFD_DIF,TA,VPD,starts_with("SWC"),starts_with("TS"))
+# df.Dav.daily[df.Dav.daily==-9999]<-NA
+# #summarize (mean) for the data:
+# df.Dav.daily<-df.Dav.daily%>%
+#   mutate(Date=as.Date(Date))%>%
+#   group_by(Date)%>%
+#   dplyr::summarise(SW_IN=mean(SW_IN,na.rm=T),PPFD_IN=mean(PPFD_IN,na.rm=T),
+#                    P=sum(P),
+#                    PPFD_OUT=mean(PPFD_OUT,na.rm=T),PPFD_DIF=mean(PPFD_DIF,na.rm=T),
+#                    TA=mean(TA,na.rm=T),VPD=mean(VPD,na.rm=T),across(starts_with("SWC"),mean),
+#                    across(starts_with("TS"),mean)
+#   )
 
-#finalize selecting variables:
+#-->update in Jan,2024-->updated processed data in Davos->using L2 processed data
+df.Dav<-read.csv(paste0(base.path,"Meteo_and_flux_composite_download/ICOSETC_CH-Dav_ARCHIVE_INTERIM_L2/",
+                        "ICOSETC_CH-Dav_FLUXNET_DD_INTERIM_L2.csv"))
 df.Dav.daily<-df.Dav %>%
-  #only selected the TS and SWC in the first layer
-  select(Date,SW_IN,P,PPFD_IN:PPFD_DIF,TA,VPD,starts_with("SWC"),starts_with("TS"))
+  #P_F values in 2023 are -9999
+  select(TIMESTAMP,TA_F,SW_IN_F,VPD_F,P_F,PPFD_IN,
+         PPFD_OUT,PPFD_DIF,TS_F_MDS_1:TS_F_MDS_5,
+         SWC_F_MDS_1:SWC_F_MDS_4,
+         NEE_VUT_REF,RECO_NT_VUT_REF,GPP_NT_VUT_REF,
+         #adding Jan, 2024:(LE)
+         LE_F_MDS
+  )%>%
+  mutate(Date=ymd(TIMESTAMP))
 df.Dav.daily[df.Dav.daily==-9999]<-NA
-#summarize (mean) for the data:
-df.Dav.daily<-df.Dav.daily%>%
-  mutate(Date=as.Date(Date))%>%
-  group_by(Date)%>%
-  dplyr::summarise(SW_IN=mean(SW_IN,na.rm=T),PPFD_IN=mean(PPFD_IN,na.rm=T),
-            P=sum(P),
-            PPFD_OUT=mean(PPFD_OUT,na.rm=T),PPFD_DIF=mean(PPFD_DIF,na.rm=T),
-            TA=mean(TA,na.rm=T),VPD=mean(VPD,na.rm=T),across(starts_with("SWC"),mean),
-            across(starts_with("TS"),mean)
-            )
 
-##B.load the snow depth data-->unit: cm
+##B.load the snow depth data-->unit: cm-->update in Jan,2024-->still not be updated
 df.Dav.more<-read.csv(paste0(base.path,"Meteo_download/ICOSETC_CH-Dav_METEOSENS_NRT/",
       "ICOSETC_CH-Dav_METEOSENS_NRT.csv"))
 #!!!original snow depth seems have some probelm-->set D_SNOW=D_SNOW*100(unit:cm)

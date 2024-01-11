@@ -309,16 +309,18 @@ ggsave(p_A_Date,filename = paste("./manuscript/Summary_Vars_with_Time/P_A_time.p
 
 #3) Gs and E:
 p_Gs_Date<-plot_point_fun_meansd(df.merge_Gs_E,"Gs",c(0.1,0.9))+
+  # plot_point_fun_meansd(df.merge_Gs_E[df.merge_Gs_E$CampaignNum!="C6",],"Gs",c(0.1,0.9))+
   labs(
-    x="2023",
+    x="",
     # x = expression("Irradiance (" * mu * mol ~ m^{-2} ~ s^{-1} * ")"),
     y = expression(G[s] ~ "(" * mu * mol ~ m^{-2} ~ s^{-1} * ")")
-  )
-p_E_Date<-plot_point_fun_meansd(df.merge_Gs_E,"E",c(0.1,0.9))+
+  )+
+  theme(legend.position = "none")
+p_E_Date<-plot_point_fun_meansd(df.merge_Gs_E,"E",c(0.05,0.9))+
   labs(
-    x="2023",
+    x="",
     # x = expression("Irradiance (" * mu * mol ~ m^{-2} ~ s^{-1} * ")"),
-    y = expression("Transpiration (mol" ~ m^{-2} ~ s^{-1} * ")")
+    y = expression("T (mol" ~ m^{-2} ~ s^{-1} * ")")
   )
 #save the plot:
 ggsave(p_Gs_Date,filename = paste("./manuscript/Summary_Vars_with_Time/P_Gs_time.png"),width = 9)
@@ -363,15 +365,18 @@ p_qNtoqP_Date<-plot_boxplot_fun(df.merge_FvFm_NPQ_qN,"qN.qP",c(0.8,0.2))+
   theme(legend.position = "none")
 
 #save the plot:
-ggsave(p_Fv.Fm_Date,filename = paste("./manuscript/Summary_Vars_with_Time/P_Fv.Fm_time.png"),width = 9)
-ggsave(p_NPQ_Date,filename = paste("./manuscript/Summary_Vars_with_Time/P_NPQ_time.png"),width = 9)
-ggsave(p_qN_Date,filename = paste("./manuscript/Summary_Vars_with_Time/P_qN_time.png"),width = 9)
+# ggsave(p_Fv.Fm_Date,filename = paste("./manuscript/Summary_Vars_with_Time/P_Fv.Fm_time.png"),width = 9)
+# ggsave(p_NPQ_Date,filename = paste("./manuscript/Summary_Vars_with_Time/P_NPQ_time.png"),width = 9)
+# ggsave(p_qN_Date,filename = paste("./manuscript/Summary_Vars_with_Time/P_qN_time.png"),width = 9)
 
 #merge the plots:
-p_physio_merge<-plot_grid(p_Fv.Fm_Date,p_PhiPS2_Date,p_NPQ_Date,p_qNtoqP_Date,
-          ncol = 1,align = "v",labels = c("A","B","C","D"))
+# p_physio_merge<-plot_grid(p_Fv.Fm_Date,p_PhiPS2_Date,p_NPQ_Date,p_qNtoqP_Date,
+#           ncol = 1,align = "v",labels = c("A","B","C","D"))
+p_physio_merge<-plot_grid(p_Fv.Fm_Date,p_NPQ_Date,p_qNtoqP_Date,
+                          ncol = 1,align = "v",labels = c("A","B","C"))
+
 ggsave(p_physio_merge,filename = paste("./manuscript/Summary_Vars_with_Time/P_physio_merge.png"),
-       width = 8,height = 10)
+       width = 8,height = 7.5)
 
 
 ##-------------
@@ -386,7 +391,8 @@ p_CartoCab_Date<-plot_point_fun_meansd(df.merge_Pigments,"CartoCab_ratio",c(0.1,
     x="2023",
     # x = expression("Irradiance (" * mu * mol ~ m^{-2} ~ s^{-1} * ")"),
     y = expression("Car/Cab")
-  )
+  )+
+  theme(legend.position = "none")
 #2) Cha
 p_Cha_Date<-plot_point_fun_meansd(df.merge_Pigments,"Cha",c(0.1,0.9))+
   labs(
@@ -402,19 +408,20 @@ p_Chb_Date<-plot_point_fun_meansd(df.merge_Pigments,"Chb",c(0.9,0.9))+
     y = expression("Chb (mg g"^-1*")")
   )
 #4) Cab
-p_Cab_Date<-plot_point_fun_meansd(df.merge_Pigments,"Cab",c(0.9,0.9))+
+p_Cab_Date<-plot_point_fun_meansd(df.merge_Pigments,"Cab",c(0.9,0.75))+
   labs(
-    x="2023",
+    x="",
     # x = expression("Irradiance (" * mu * mol ~ m^{-2} ~ s^{-1} * ")"),
     y = expression("Cab (mg g"^-1*")")
   )
 #5)Car
 p_Car_Date<-plot_point_fun_meansd(df.merge_Pigments,"Car",c(0.9,0.9))+
   labs(
-    x="2023",
+    x="",
     # x = expression("Irradiance (" * mu * mol ~ m^{-2} ~ s^{-1} * ")"),
     y = expression("Car (mg g"^-1*")")
-  )
+  )+
+  theme(legend.position = "none")
 #addtional plots:
 #theorotically, if ratio of Cha/Chb high-->higher light photoprotection according to Liyao
 #but the results did not reflect this 
@@ -425,14 +432,16 @@ p_ChatoChb_Date<-plot_point_fun_meansd(df.merge_Pigments,"Car",c(0.9,0.9))+
     y = expression("Chla/Chb")
   )
 #save the plot:
-ggsave(p_CartoCab_Date,filename = paste("./manuscript/Summary_Vars_with_Time/P_CartoCab_time.png"),width = 9)
-ggsave(p_Cha_Date,filename = paste("./manuscript/Summary_Vars_with_Time/P_Cha_time.png"),width = 9)
-ggsave(p_Chb_Date,filename = paste("./manuscript/Summary_Vars_with_Time/P_Chb_time.png"),width = 9)
-ggsave(p_Cab_Date,filename = paste("./manuscript/Summary_Vars_with_Time/P_Cab_time.png"),width = 9)
-ggsave(p_Car_Date,filename = paste("./manuscript/Summary_Vars_with_Time/P_Car_time.png"),width = 9)
+# ggsave(p_CartoCab_Date,filename = paste("./manuscript/Summary_Vars_with_Time/P_CartoCab_time.png"),width = 9)
+# ggsave(p_Cha_Date,filename = paste("./manuscript/Summary_Vars_with_Time/P_Cha_time.png"),width = 9)
+# ggsave(p_Chb_Date,filename = paste("./manuscript/Summary_Vars_with_Time/P_Chb_time.png"),width = 9)
+# ggsave(p_Cab_Date,filename = paste("./manuscript/Summary_Vars_with_Time/P_Cab_time.png"),width = 9)
+# ggsave(p_Car_Date,filename = paste("./manuscript/Summary_Vars_with_Time/P_Car_time.png"),width = 9)
 #merge the plots:
-p_pigments_merge<-plot_grid(p_Cab_Date,p_Car_Date,p_CartoCab_Date,nrow=1)
-
+p_pigments_merge<-plot_grid(p_Cab_Date,p_Car_Date,p_CartoCab_Date,ncol=1,
+                            align = "v",labels = c("A","B","C"))
+ggsave(p_pigments_merge,filename = paste("./manuscript/Summary_Vars_with_Time/P_pigment_merge.png"),
+       width = 8,height = 8)
 
 ##-------------
 #leaf spectral data
@@ -440,24 +449,26 @@ p_pigments_merge<-plot_grid(p_Cab_Date,p_Car_Date,p_CartoCab_Date,nrow=1)
 #1) NDVI
 p_NDVI_Date<-plot_point_fun_meansd(df.Poly.sepctra,"NDVI",c(0.1,0.1))+
   labs(
-    x="2023",
+    x="",
     # x = expression("Irradiance (" * mu * mol ~ m^{-2} ~ s^{-1} * ")"),
     y = expression("NDVI")
-  )
+  )+
+  theme(legend.position =c(0.25,0.25))
 #2) PRI
 p_PRI_Date<-plot_point_fun_meansd(df.Poly.sepctra,"PRI",c(0.1,0.1))+
   labs(
     x="2023",
     # x = expression("Irradiance (" * mu * mol ~ m^{-2} ~ s^{-1} * ")"),
     y = expression("PRI")
-  )
+  )+
+  theme(legend.position = "none")
 #save the plot:
-ggsave(p_NDVI_Date,filename = paste("./manuscript/Summary_Vars_with_Time/P_NDVI_time.png"),width = 9)
-ggsave(p_PRI_Date,filename = paste("./manuscript/Summary_Vars_with_Time/P_PRI_time.png"),width = 9)
+# ggsave(p_NDVI_Date,filename = paste("./manuscript/Summary_Vars_with_Time/P_NDVI_time.png"),width = 9)
+# ggsave(p_PRI_Date,filename = paste("./manuscript/Summary_Vars_with_Time/P_PRI_time.png"),width = 9)
 #merge the plots:
-p_VIs_merge<-plot_grid(p_NDVI_Date,p_PRI_Date)
-
-
+p_VIs_merge<-plot_grid(p_NDVI_Date,p_PRI_Date,ncol=1,align = "v",labels = c("A","B"))
+ggsave(p_VIs_merge,filename = paste("./manuscript/Summary_Vars_with_Time/P_VIs_merge.png"),
+       width = 9,height = 6)
 
 ##-------------
 #leaf water potential
@@ -468,7 +479,7 @@ p_WP_twig_Date<-plot_point_fun_meansd(df.WP,"WP_Twig",c(0.8,0.2))+
     x="2023",
     # x = expression("Irradiance (" * mu * mol ~ m^{-2} ~ s^{-1} * ")"),
     y = expression(psi[twig]*" (bar)")
-  )
+  )+theme(legend.position = "none")
 #big branch
 p_WP_branch_Date<-plot_point_fun_meansd(df.WP,"WP_Branch",c(0.8,0.2))+
   labs(
@@ -477,8 +488,13 @@ p_WP_branch_Date<-plot_point_fun_meansd(df.WP,"WP_Branch",c(0.8,0.2))+
     y = expression(psi[branch]*" (bar)")
   )
 #save the plot:
-ggsave(p_WP_twig_Date,filename = paste("./manuscript/Summary_Vars_with_Time/P_WP_twig_time.png"),width = 9)
-ggsave(p_WP_branch_Date,filename = paste("./manuscript/Summary_Vars_with_Time/P_WP_branch_time.png"),width = 9)
+# ggsave(p_WP_twig_Date,filename = paste("./manuscript/Summary_Vars_with_Time/P_WP_twig_time.png"),width = 9)
+# ggsave(p_WP_branch_Date,filename = paste("./manuscript/Summary_Vars_with_Time/P_WP_branch_time.png"),width = 9)
+#!merge the transpiration,Gs, and,leaf water potential
+p_hydro_merge<-plot_grid(p_E_Date,p_Gs_Date,p_WP_twig_Date,ncol=1,
+                         align = "v",labels = c("A","B","C"))
+ggsave(p_hydro_merge,filename = paste("./manuscript/Summary_Vars_with_Time/P_hydro_merge.png"),
+       width = 10,height = 8)
 
 ##-------------
 #leaf traits
@@ -488,7 +504,8 @@ p_SLA_Date<-plot_boxplot_fun(df.merge_traits,"SLA",c(0.9,0.9))+
     x="2023",
     # x = expression("Irradiance (" * mu * mol ~ m^{-2} ~ s^{-1} * ")"),
     y = expression(SLA*" (cm"^2*g^-1*")")
-  )
+  )+
+  theme(legend.position = "none")
 # p_LMA_Date<-plot_point_fun_meansd(df.merge_traits,"LMA",c(0.9,0.9))+
 #   labs(
 #     x="2023",
@@ -497,10 +514,28 @@ p_SLA_Date<-plot_boxplot_fun(df.merge_traits,"SLA",c(0.9,0.9))+
 #   )
 p_width_Date<-plot_boxplot_fun(df.merge_traits,"ImageJ_average_width",c(0.9,0.9))+
   labs(
-    x="2023",
+    x="",
     # x = expression("Irradiance (" * mu * mol ~ m^{-2} ~ s^{-1} * ")"),
     y = expression("Needle width (cm"*")")
-  )
+  )+
+  theme(legend.position = c(0.05,0.8))
+
 #save the plot:
-ggsave(p_SLA_Date,filename = paste("./manuscript/Summary_Vars_with_Time/P_SLA_time.png"),width = 9)
-ggsave(p_width_Date,filename = paste("./manuscript/Summary_Vars_with_Time/P_width_time.png"),width = 9)
+# ggsave(p_SLA_Date,filename = paste("./manuscript/Summary_Vars_with_Time/P_SLA_time.png"),width = 9)
+# ggsave(p_width_Date,filename = paste("./manuscript/Summary_Vars_with_Time/P_width_time.png"),width = 9)
+p_traits_merge<-plot_grid(p_width_Date,p_SLA_Date,ncol=1,align = "v",labels = c("A","B"))
+ggsave(p_traits_merge,filename = paste("./manuscript/Summary_Vars_with_Time/P_traits_merge.png"),
+       width = 9,height = 6)
+
+
+###additional Merge plots:
+#merge the leaf pigments and VIs:
+p_CartoCab_Date<-p_CartoCab_Date+
+  xlab("")+
+  theme(legend.position = c(0.05,0.8))
+p_PRI_Date<-p_PRI_Date+
+  ylim(-0.2,0.1)
+p_pigment_PRI<-plot_grid(p_CartoCab_Date,p_PRI_Date,align = "h",ncol=1,nrow=2,
+                         width=9,height=6,labels=c("A","B"))
+ggsave(p_pigment_PRI,filename = paste("./manuscript/Summary_Vars_with_Time/P_pigment_PRI.png"),
+       width = 9,height = 6)
