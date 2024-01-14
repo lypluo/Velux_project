@@ -53,6 +53,15 @@ df %>%
   geom_point()+
   geom_smooth()+
   facet_wrap(~Year)
+
+df %>%
+  filter(sitename=="CH-Dav")%>%
+  group_by(Year)%>%
+  ggplot(aes(x=DoY,y=LE))+
+  geom_point()+
+  geom_smooth()+
+  facet_wrap(~Year)
+
 #Tharandt
 df %>%
   filter(sitename=="DE-Tha")%>%
@@ -70,14 +79,18 @@ df %>%
   geom_smooth()+
   facet_wrap(~Year)
 
+df %>%
+  filter(sitename=="DE-Tha")%>%
+  group_by(Year)%>%
+  ggplot(aes(x=DoY,y=LE))+
+  geom_point()+
+  geom_smooth()+
+  facet_wrap(~Year)
+
 ##---------
-#calculate the mean 
+#GPP 
 ##---------
-# summarise(GPP_mean=mean(GPP),NEE_mean=mean(NEE),LE_mean=mean(LE),
-#           SW_IN_mean=mean(SW_IN),PPFD_IN_mean=mean(PPFD_IN),
-#           TA_mean=mean(TA),VPD_mean=mean(VPD),P_mean=mean(P)
-# )
-plot_fun_mean<-function(df,sitename){
+plot_fun_GPP_mean<-function(df,sitename){
   # df<-df
   # sitename<-"CH-Dav"
   
@@ -111,9 +124,12 @@ plot_fun_mean<-function(df,sitename){
     xlim(0,242)+
     ylim(-2,12)+
     annotate(geom = "text",x=20,y=11.5,label=sitename,size=6)+
+    annotate(geom = "segment",x=180,xend=190,y = 1.5,yend = 1.5,col="orange",size=1.5)+
+    annotate(geom = "segment",x=180,xend=190,y = 1,yend = 1,col="black",size=1.5)+
+    annotate(geom = "text",x=200,y=c(1.5,1),label=c("2023","Mean"),size=5)+
     ylab(expression("GPP ("*mu*"mol m"^-2*"s"^-1*")"))+
-    theme(axis.title = element_text(size=22),
-          axis.text = element_text(size = 18),
+    theme(axis.title = element_text(size=24),
+          axis.text = element_text(size = 22),
           legend.position =c(0.6,0.5),
           legend.background = "none"
           )+
@@ -126,4 +142,99 @@ plot_fun_mean<-function(df,sitename){
 plot_Dav<-plot_fun_mean(df,"CH-Dav")
 plot_Tha<-plot_fun_mean(df,"DE-Tha")
 #
-plot_grid(plot_Tha,plot_Dav,align = "h",labels = c("A","B"),nrow=1)
+GPP_multiY_merge<-plot_grid(plot_Tha,plot_Dav,align = "h",labels = c("A","B"),nrow=1)
+
+#save the plots
+save.path<-"./manuscript/"
+ggsave(GPP_multiY_merge,filename = paste("./manuscript/GPP_multiY_merge.png"),
+       width = 9,height = 6)
+
+##---------
+#NEE and LE
+##---------
+plot_fun_fluxes_mean<-function(df,sitename,flux_name){
+  # df<-df
+  # sitename<-"DE-Tha"
+  # flux_name<-"NEE"
+  
+  if(sitename=="CH-Dav"){
+    df.use<-df%>%
+      filter(sitename=="CH-Dav")%>%
+      filter(Year!=2019)%>%
+      mutate(Year=as.factor(Year))%>%
+      select(DoY,Year,flux_name)
+    names(df.use)<-c("DoY","Year","y")
+  }
+  if(sitename=="DE-Tha"){
+    df.use<-df%>%
+      filter(sitename=="DE-Tha")%>%
+      filter(Year!=1996 & Year!=2020 )%>%
+      mutate(Year=as.factor(Year))%>%
+      select(DoY,Year,flux_name)
+    names(df.use)<-c("DoY","Year","y")
+  }
+  
+  df.use.mean<-df.use %>%
+    select(DoY,y)%>%
+    group_by(DoY)%>%
+    summarise(y_mean=mean(y),
+              y_sd=sd(y))
+  # 
+  p_plot<-ggplot()+
+    # geom_point(aes(x=DoY,y=GPP, col=as.factor(Year)),data=df.y.use[df.y.use$Year!=2023,])+
+    geom_ribbon(aes(x=DoY,ymin=y_mean-y_sd,ymax=y_mean+y_sd),
+                data=df.use.mean,fill="gray",size=1.5)+
+    stat_smooth(aes(x=DoY,y=y, col=Year),data=df.use[df.use$Year!=2023,],se=FALSE)+
+    # geom_line(aes(x=DoY,y=y_mean),data=df.y.use.mean,col=adjustcolor("black",0.8),size=2)+
+    stat_smooth(aes(x=DoY,y=y_mean),data=df.use.mean,col=adjustcolor("black",0.8),size=2)+
+    stat_smooth(aes(x=DoY,y=y),data=df.use[df.use$Year==2023,],
+                col="orange",se=FALSE,size=2)+
+    xlim(0,242)+
+        theme(axis.title = element_text(size=24),
+          axis.text = element_text(size = 22),
+          legend.position =c(0.6,0.5),
+          legend.background = "none"
+    )+
+    theme_bw()
+  if(flux_name=="LE"){
+    p_plot<-p_plot+
+      ylim(0,135)+
+      annotate(geom = "text",x=20,y=125,label=sitename,size=6)+
+      annotate(geom = "segment",x=180,xend=190,y = 15,yend = 15,col="orange",size=1.5)+
+      annotate(geom = "segment",x=180,xend=190,y = 5,yend = 5,col="black",size=1.5)+
+      annotate(geom = "text",x=200,y=c(15,5),label=c("2023","Mean"),size=5)+
+      ylab(expression("LE ( W m"^-2*"s"^-1*")"))
+  }
+  if(flux_name=="NEE"){
+    p_plot<-p_plot+
+      ylim(-5.5,4)+
+      geom_hline(yintercept = 0,lty=2,size=1.1)+
+      annotate(geom = "text",x=20,y=3.9,label=sitename,size=6)+
+      annotate(geom = "segment",x=180,xend=190,y = -4.5,yend = -4.5,col="orange",size=1.5)+
+      annotate(geom = "segment",x=180,xend=190,y = -4.95,yend = -4.95,col="black",size=1.5)+
+      annotate(geom = "text",x=200,y=c(-4.5,-4.95),label=c("2023","Mean"),size=5)+
+      ylab(expression("NEE ("*mu*"mol m"^-2*"s"^-1*")"))
+  }
+  #
+  return(p_plot)
+}
+#$######
+#NEE
+#$######
+plot_Dav_NEE<-plot_fun_fluxes_mean(df,"CH-Dav","NEE")
+plot_Tha_NEE<-plot_fun_fluxes_mean(df,"DE-Tha","NEE")
+#
+NEE_multiY_merge<-plot_grid(plot_Tha_NEE,plot_Dav_NEE,align = "h",labels = c("A","B"),nrow=1)
+
+#$######
+#LE
+#$######
+plot_Dav_LE<-plot_fun_fluxes_mean(df,"CH-Dav","LE")
+plot_Tha_LE<-plot_fun_fluxes_mean(df,"DE-Tha","LE")
+#
+LE_multiY_merge<-plot_grid(plot_Tha_LE,plot_Dav_LE,align = "h",labels = c("A","B"),nrow=1)
+
+
+
+
+
