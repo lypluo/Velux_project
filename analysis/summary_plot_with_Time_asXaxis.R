@@ -27,7 +27,9 @@ names(df.Tha)
 
 #extract the Ta for Davos and Tharandt:
 df.Dav.Meteo<-df.Dav %>%
-  select(Date,TA,PPFD_IN,P)%>%
+  select(Date,TA_F,PPFD_IN,P_F)%>%
+  mutate(TA=TA_F,TA_F=NULL,
+         P=P_F,P_F=NULL)%>%
   filter(Date %in% as.Date(c("2023-03-08","2023-03-27","2023-04-21",
                    "2023-05-03","2023-05-22","2023-07-17")))%>%
   mutate(sitename="DAV",

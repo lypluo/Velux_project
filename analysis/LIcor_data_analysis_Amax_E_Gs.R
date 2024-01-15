@@ -294,7 +294,7 @@ df.physio<-df.Amax.merge %>%
   #Gs:stomatal conductance-->refer to Tang et al., 2022:
   #https://nph.onlinelibrary.wiley.com/doi/full/10.1111/nph.18649
   mutate(Gs=E*VPDleaf/Pa)%>%
-  select(sitename,ID,CampaignNum,Position,Gs,E,gsw,gtc)%>%
+  select(sitename,ID,CampaignNum,Position,A,Gs,E,gsw,gtc)%>%
   filter(Gs>0 & E>0)
 ##save the data:
 save(df.physio,file = paste0("./data/LIcor/Gs_E.cleaned.RDA"))
@@ -320,6 +320,11 @@ plot_physio<-function(df,plot_var){
     theme(axis.text = element_text(size=14),
           axis.title = element_text(size=16))
   #
+  if(plot_var=="A"){
+    p_plot<-p_plot+
+      ylab(expression(A[net] ~ "(" * mu * mol ~ m^{-2} ~ s^{-1} * ")"))
+  }
+  #
   if(plot_var=="Gs"){
     p_plot<-p_plot+
       ylab(expression(Gs ~ "(" * mol ~ m^{-2} ~ s^{-1} * ")"))
@@ -337,6 +342,7 @@ plot_physio<-function(df,plot_var){
  return(p_plot) 
 }
 ###plotting
+plot_A<-plot_physio(df.physio,"A")
 plot_E<-plot_physio(df.physio,"E")
 plot_Gs<-plot_physio(df.physio,"Gs")
 

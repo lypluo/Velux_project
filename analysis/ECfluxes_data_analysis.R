@@ -5,9 +5,10 @@ library(tidyverse)
 library(lubridate)
 library(ggplot2)
 library(cowplot)
+library(dplyr)
 
 #-------------
-#(1)load the data
+#(1)load the data-using daily data
 #-------------
 load.path<-"./data/EC_MeteoandFlux/"
 load(paste0(load.path,"df_daily_from_ICOS.RDA"))
@@ -109,7 +110,7 @@ plot_fun_GPP_mean<-function(df,sitename){
       
   df.GPP.use.mean<-df.GPP.use %>%
     group_by(DoY)%>%
-    summarise(GPP_mean=mean(GPP),
+    dplyr::summarise(GPP_mean=mean(GPP),
               GPP_sd=sd(GPP))
   # 
   p_plot<-ggplot()+
@@ -126,7 +127,7 @@ plot_fun_GPP_mean<-function(df,sitename){
     annotate(geom = "text",x=20,y=11.5,label=sitename,size=6)+
     annotate(geom = "segment",x=180,xend=190,y = 1.5,yend = 1.5,col="orange",size=1.5)+
     annotate(geom = "segment",x=180,xend=190,y = 1,yend = 1,col="black",size=1.5)+
-    annotate(geom = "text",x=200,y=c(1.5,1),label=c("2023","Mean"),size=5)+
+    annotate(geom = "text",x=220,y=c(1.5,1),label=c("2023","Mean"),size=5)+
     ylab(expression("GPP ("*mu*"mol m"^-2*"s"^-1*")"))+
     theme(axis.title = element_text(size=24),
           axis.text = element_text(size = 22),
@@ -139,15 +140,15 @@ plot_fun_GPP_mean<-function(df,sitename){
   
 }
 #
-plot_Dav<-plot_fun_mean(df,"CH-Dav")
-plot_Tha<-plot_fun_mean(df,"DE-Tha")
+plot_Dav<-plot_fun_GPP_mean(df,"CH-Dav")
+plot_Tha<-plot_fun_GPP_mean(df,"DE-Tha")
 #
 GPP_multiY_merge<-plot_grid(plot_Tha,plot_Dav,align = "h",labels = c("A","B"),nrow=1)
 
 #save the plots
 save.path<-"./manuscript/"
 ggsave(GPP_multiY_merge,filename = paste("./manuscript/GPP_multiY_merge.png"),
-       width = 9,height = 6)
+       width = 12,height = 6)
 
 ##---------
 #NEE and LE
@@ -177,7 +178,7 @@ plot_fun_fluxes_mean<-function(df,sitename,flux_name){
   df.use.mean<-df.use %>%
     select(DoY,y)%>%
     group_by(DoY)%>%
-    summarise(y_mean=mean(y),
+    dplyr::summarise(y_mean=mean(y),
               y_sd=sd(y))
   # 
   p_plot<-ggplot()+
@@ -202,7 +203,7 @@ plot_fun_fluxes_mean<-function(df,sitename,flux_name){
       annotate(geom = "text",x=20,y=125,label=sitename,size=6)+
       annotate(geom = "segment",x=180,xend=190,y = 15,yend = 15,col="orange",size=1.5)+
       annotate(geom = "segment",x=180,xend=190,y = 5,yend = 5,col="black",size=1.5)+
-      annotate(geom = "text",x=200,y=c(15,5),label=c("2023","Mean"),size=5)+
+      annotate(geom = "text",x=220,y=c(15,5),label=c("2023","Mean"),size=5)+
       ylab(expression("LE ( W m"^-2*"s"^-1*")"))
   }
   if(flux_name=="NEE"){
@@ -210,9 +211,9 @@ plot_fun_fluxes_mean<-function(df,sitename,flux_name){
       ylim(-5.5,4)+
       geom_hline(yintercept = 0,lty=2,size=1.1)+
       annotate(geom = "text",x=20,y=3.9,label=sitename,size=6)+
-      annotate(geom = "segment",x=180,xend=190,y = -4.5,yend = -4.5,col="orange",size=1.5)+
+      annotate(geom = "segment",x=180,xend=190,y = -4.7,yend = -4.7,col="orange",size=1.5)+
       annotate(geom = "segment",x=180,xend=190,y = -4.95,yend = -4.95,col="black",size=1.5)+
-      annotate(geom = "text",x=200,y=c(-4.5,-4.95),label=c("2023","Mean"),size=5)+
+      annotate(geom = "text",x=220,y=c(-4.7,-4.95),label=c("2023","Mean"),size=5)+
       ylab(expression("NEE ("*mu*"mol m"^-2*"s"^-1*")"))
   }
   #
@@ -225,6 +226,10 @@ plot_Dav_NEE<-plot_fun_fluxes_mean(df,"CH-Dav","NEE")
 plot_Tha_NEE<-plot_fun_fluxes_mean(df,"DE-Tha","NEE")
 #
 NEE_multiY_merge<-plot_grid(plot_Tha_NEE,plot_Dav_NEE,align = "h",labels = c("A","B"),nrow=1)
+#save the plots
+save.path<-"./manuscript/"
+ggsave(NEE_multiY_merge,filename = paste("./manuscript/NEE_multiY_merge.png"),
+       width = 12,height = 6)
 
 #$######
 #LE
@@ -233,6 +238,11 @@ plot_Dav_LE<-plot_fun_fluxes_mean(df,"CH-Dav","LE")
 plot_Tha_LE<-plot_fun_fluxes_mean(df,"DE-Tha","LE")
 #
 LE_multiY_merge<-plot_grid(plot_Tha_LE,plot_Dav_LE,align = "h",labels = c("A","B"),nrow=1)
+#save the plots
+save.path<-"./manuscript/"
+ggsave(LE_multiY_merge,filename = paste("./manuscript/LE_multiY_merge.png"),
+       width = 12,height = 6)
+
 
 
 
