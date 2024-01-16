@@ -187,9 +187,3 @@ df_midday<-list("Dav_midday"=df.Dav.HH_sel,
 save.path<-"./data/EC_MeteoandFlux/"
 save(df_midday,file = paste0(save.path,"df_midday_from_ICOS.RDA"))
 
-
-
-
-
-
-
