@@ -1,8 +1,8 @@
 max.filter <- function(Data, name, act.opts,...) {
   # library(zoo)
-  # Data=df.GPP.use
-  # name="GPP";
-  # act.opts<-data.frame(w=3,qt=0.5)
+  # Data=df.VIs.Dav
+  # name="NDVI";
+  # act.opts<-data.frame(w=15,qt=0.5)
   
   Data$daily.time<-as.POSIXct(strftime(Data$Date, format="%Y-%m-%d"))
   Data$doy<-format(Data$daily.time,format = '%j')
