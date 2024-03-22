@@ -338,7 +338,7 @@ p_Fv.Fm_Date<-plot_boxplot_fun(df.merge_FvFm_NPQ_qN,"Fv.Fm",c(0.1,0.9))+
     # x = expression("Irradiance (" * mu * mol ~ m^{-2} ~ s^{-1} * ")"),
     y = expression("Fv/Fm")
   )+
-  theme(axis.text.x = element_blank(),legend.position = c(0.4,0.3))
+  theme(legend.position = c(0.4,0.3))
 p_PhiPS2_Date<-plot_boxplot_fun(df.merge_FvFm_NPQ_qN,"PhiPS2",c(0.8,0.2))+
   labs(
     x="",
@@ -367,16 +367,17 @@ p_qNtoqP_Date<-plot_boxplot_fun(df.merge_FvFm_NPQ_qN,"qN.qP",c(0.8,0.2))+
   theme(legend.position = "none")
 
 #save the plot:
-# ggsave(p_Fv.Fm_Date,filename = paste("./manuscript/Summary_Vars_with_Time/P_Fv.Fm_time.png"),width = 9)
+ggsave(p_Fv.Fm_Date,filename = paste("./manuscript/Summary_Vars_with_Time/P_Fv.Fm_time.png"),width = 9)
 # ggsave(p_NPQ_Date,filename = paste("./manuscript/Summary_Vars_with_Time/P_NPQ_time.png"),width = 9)
 # ggsave(p_qN_Date,filename = paste("./manuscript/Summary_Vars_with_Time/P_qN_time.png"),width = 9)
 
 #merge the plots:
 # p_physio_merge<-plot_grid(p_Fv.Fm_Date,p_PhiPS2_Date,p_NPQ_Date,p_qNtoqP_Date,
 #           ncol = 1,align = "v",labels = c("A","B","C","D"))
+p_Fv.Fm_Date<-p_Fv.Fm_Date+
+  theme(axis.text.x = element_blank())
 p_physio_merge<-plot_grid(p_Fv.Fm_Date,p_NPQ_Date,p_qNtoqP_Date,
                           ncol = 1,align = "v",labels = c("A","B","C"))
-
 ggsave(p_physio_merge,filename = paste("./manuscript/Summary_Vars_with_Time/P_physio_merge.png"),
        width = 8,height = 7.5)
 
