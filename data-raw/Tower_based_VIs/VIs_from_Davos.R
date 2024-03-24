@@ -64,9 +64,9 @@ library(phenopix)
 library(zoo)
 source(file = "./R/max.filter.R")
 #for NDVI, using 90% percentile to filter
-df.filter_max1<-max.filter(df.VIs.Dav,c("NDVI"),act.opts = data.frame(w=15,qt=0.9))
+df.filter_max1<-max.filter(df.VIs.Dav,c("NDVI"),act.opts = data.frame(w=7,qt=0.9))
 #other variables, using 50% percentile to filter:
-df.filter_max2<-max.filter(df.VIs.Dav,c("PAR_in","PRI","SIF_a_sfm"),act.opts = data.frame(w=15,qt=0.5))
+df.filter_max2<-max.filter(df.VIs.Dav,c("PAR_in","PRI","SIF_a_sfm"),act.opts = data.frame(w=7,qt=0.5))
 
 df.all.Dav<-left_join(df.VIs.Dav,df.filter_max1,by="Date")
 df.all.Dav<-left_join(df.all.Dav,df.filter_max2,by="Date")%>%

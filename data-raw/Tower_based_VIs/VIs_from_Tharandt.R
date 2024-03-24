@@ -33,7 +33,7 @@ NDVI_3<-read_data(paste0(load.path,file.names[3]))
 #merge to daily(using the data in the midday)
 df.NDVI<-rbind(rbind(NDVI_1,NDVI_2),NDVI_3)
 df.NDVI_temp<-df.NDVI %>%
-  select(TIMESTAMP,RECORD,NDVI_Avg)%>%
+  dplyr::select(TIMESTAMP,RECORD,NDVI_Avg)%>%
   mutate(TIMESTAMP=ymd_hms(TIMESTAMP))%>%
   mutate(Date=as.Date(TIMESTAMP),Hour=hour(TIMESTAMP),
          NDVI_Avg=as.numeric(NDVI_Avg))%>%
@@ -58,7 +58,7 @@ PRI_3<-read_data(paste0(load.path,PRI.files[3]))
 #merge to daily(using the data in the midday)
 df.PRI<-rbind(rbind(PRI_1,PRI_2),PRI_3)
 df.PRI_temp<-df.PRI %>%
-  select(TIMESTAMP,RECORD,PRI_Avg)%>%
+  dplyr::select(TIMESTAMP,RECORD,PRI_Avg)%>%
   mutate(TIMESTAMP=ymd_hms(TIMESTAMP))%>%
   mutate(Date=as.Date(TIMESTAMP),Hour=hour(TIMESTAMP),
          PRI_Avg=as.numeric(PRI_Avg))%>%
@@ -76,4 +76,17 @@ t_p_merge<-plot_grid(t_NDVI,t_PRI,nrow=2)
 
 #----save the plot
 ggsave(filename = paste0("./test/check_tower_based_VIs/Tharandt_VIs.png"),t_p_merge)
-
+##save the data:
+df.all.Tha<-left_join(df.NDVI_temp,df.PRI_temp)
+####apply the filtering method
+library(zoo)
+source(file = "./R/max.filter.R")
+#for NDVI, using 90% percentile to filter
+df.filter_max1<-max.filter(df.all.Tha,c("NDVI"),act.opts = data.frame(w=7,qt=0.9))
+#other variables, using 50% percentile to filter:
+df.filter_max2<-max.filter(df.all.Tha,c("PRI"),act.opts = data.frame(w=7,qt=0.5))
+#
+df.all.Tha<-cbind(df.all.Tha,"NDVI.max.filtered"=df.filter_max1$NDVI.max.filtered,
+                  "PRI.max.filtered"=df.filter_max2$PRI.max.filtered)%>%
+  dplyr::filter(NDVI<=1&NDVI>=0)
+save(df.all.Tha,file = paste0("./data/Tower_based_VIs/Tharandt_SIF_and_VIs.RDA"))
