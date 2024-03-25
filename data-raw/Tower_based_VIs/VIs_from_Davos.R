@@ -32,6 +32,10 @@ Date<-as.Date(ncvar_get(nc_data,"FLUO/time"),origin="2021-05-11")
 
 df.VIs.Dav<-data.frame(Date=Date,NDVI=NDVI,PRI=PRI,PAR_in=PAR_in,FULL_sza=FULL_sza,
                        SIF_a_sfm=SIF_a_sfm,FLUO_sza=FLUO_sza)
+#calculate the SIF/PAR
+df.VIs.Dav<-df.VIs.Dav %>%
+  mutate(SIF_over_PAR=SIF_a_sfm/PAR_in)
+
 #----------------------
 #(2)exploring the data:  
 #---------------------
@@ -47,6 +51,8 @@ p_t_FLUO_sza<-ggplot(data=df.VIs.Dav)+
   geom_point(aes(x=Date,y=FLUO_sza))
 p_t_SIF_A<-ggplot(data=df.VIs.Dav)+
   geom_point(aes(x=Date,y=SIF_a_sfm))
+p_t_SIF_over_PAR<-ggplot(data=df.VIs.Dav)+
+  geom_point(aes(x=Date,y=SIF_over_PAR))
 
 #merge the plots:
 library(cowplot)
@@ -66,12 +72,12 @@ source(file = "./R/max.filter.R")
 #for NDVI, using 90% percentile to filter
 df.filter_max1<-max.filter(df.VIs.Dav,c("NDVI"),act.opts = data.frame(w=7,qt=0.9))
 #other variables, using 50% percentile to filter:
-df.filter_max2<-max.filter(df.VIs.Dav,c("PAR_in","PRI","SIF_a_sfm"),act.opts = data.frame(w=7,qt=0.5))
+df.filter_max2<-max.filter(df.VIs.Dav,c("PAR_in","PRI","SIF_a_sfm","SIF_over_PAR"),act.opts = data.frame(w=7,qt=0.5))
 
 df.all.Dav<-left_join(df.VIs.Dav,df.filter_max1,by="Date")
 df.all.Dav<-left_join(df.all.Dav,df.filter_max2,by="Date")%>%
   dplyr::filter(NDVI<=1&SIF_a_sfm<=1)
-  
+#
 p_PAR_in<-ggplot(data=df.all.Dav)+
   geom_point(aes(x=Date,y=PAR_in))+
   geom_point(aes(x=Date,y=PAR_in.max.filtered),col="red")

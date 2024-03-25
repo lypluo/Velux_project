@@ -26,12 +26,12 @@ read_data<-function(df_path){
   return(df_temp)
 }
 #
-NDVI_1<-read_data(paste0(load.path,file.names[1]))
-NDVI_2<-read_data(paste0(load.path,file.names[2]))
-NDVI_3<-read_data(paste0(load.path,file.names[3]))
-#original data recorded as every minute
-#merge to daily(using the data in the midday)
-df.NDVI<-rbind(rbind(NDVI_1,NDVI_2),NDVI_3)
+df.NDVI<-c()
+for(i in 1:length(NDVI.files)){
+  NDVI_temp<-read_data(paste0(load.path,file.names[i]))
+  df.NDVI<-rbind(df.NDVI,NDVI_temp)
+}
+#
 df.NDVI_temp<-df.NDVI %>%
   dplyr::select(TIMESTAMP,RECORD,NDVI_Avg)%>%
   mutate(TIMESTAMP=ymd_hms(TIMESTAMP))%>%
@@ -51,12 +51,13 @@ t_NDVI<-df.NDVI_temp%>%
 #--for PRI---
 PRI.files<-file.names[grep("PRI",file.names)]
 #
-PRI_1<-read_data(paste0(load.path,PRI.files[1]))
-PRI_2<-read_data(paste0(load.path,PRI.files[2]))
-PRI_3<-read_data(paste0(load.path,PRI.files[3]))
+df.PRI<-c()
+for(i in 1:length(PRI.files)){
+  PRI_temp<-read_data(paste0(load.path,PRI.files[i]))
+  df.PRI<-rbind(df.PRI,PRI_temp)
+}
 #original data recorded as every minute
 #merge to daily(using the data in the midday)
-df.PRI<-rbind(rbind(PRI_1,PRI_2),PRI_3)
 df.PRI_temp<-df.PRI %>%
   dplyr::select(TIMESTAMP,RECORD,PRI_Avg)%>%
   mutate(TIMESTAMP=ymd_hms(TIMESTAMP))%>%
