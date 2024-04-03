@@ -10,7 +10,7 @@ library(tidyverse)
 ##A.load the tower-based VIs
 load.path<-"./data/Tower_based_VIs/"
 load(paste0(load.path,"Davos_SIF_and_VIs.RDA"))
-load(paste0(load.path,"Tharandt_SIF_and_VIs.RDA"))
+load(paste0(load.path,"Tharandt_VIs.RDA"))
 
 #
 df.Dav<-df.all.Dav%>%
@@ -84,18 +84,28 @@ plot_fun<-function(df,var_name){
       dplyr::select(Date,var_name,paste0(var_name,".max.filtered"),sitename)%>%
       filter(Date>=as.Date("2023-01-01") & Date<=as.Date("2023-10-31"))
   names(df_sel)<-c("Date","y","y.max.filtered","sitename")
-
+  ## in Tharand as the VIs are only avaiable from April, 2023-->try to use the data
+  ## in 2024 to illustrate the VI variation in Tharandt
+  df_Tha_add<-df %>%
+    dplyr::select(Date,var_name,paste0(var_name,".max.filtered"),sitename)%>%
+    filter(sitename=="DE-Tha")%>%
+    filter(Date>=as.Date("2024-01-01") & Date<=as.Date("2024-04-03"))
+  names(df_Tha_add)<-c("Date","y","y.max.filtered","sitename")
+  df_Tha_add$pesudo_Date<-as.POSIXct(as.Date("2023-01-01")+yday(df_Tha_add$Date)-1)
   
   #plotting
-  p_plot<-df_sel%>%
-    ggplot()+
-    geom_point(aes(x=Date,y=y,col=sitename))+
+  p_plot<-ggplot()+
+    geom_point(aes(x=Date,y=y,col=sitename),data=df_sel)+
     scale_color_manual(values = c("CH-Dav"=adjustcolor("tomato",0.4),
                                   "DE-Tha"=adjustcolor("cyan3",0.4)))+
     geom_line(aes(Date,y.max.filtered),data=df_sel[df_sel$sitename=="DE-Tha",],
               col="cyan4",linewidth=1.1)+
     geom_line(aes(Date,y.max.filtered),data=df_sel[df_sel$sitename=="CH-Dav",],
               col="tomato",linewidth=1.1)+
+    ##add additional data for Tharandt-->using 2024-01--2024-04 data-->using dashed line
+    geom_point(aes(x=pesudo_Date,y=y,col=sitename),data=df_Tha_add)+
+    geom_line(aes(pesudo_Date,y.max.filtered),data=df_Tha_add[df_Tha_add$sitename=="DE-Tha",],
+              col="cyan4",linewidth=1.1,lty=2)+
     theme_light()+
     ylab(var_name)+
     xlab("")+

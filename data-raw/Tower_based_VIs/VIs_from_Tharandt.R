@@ -90,4 +90,4 @@ df.filter_max2<-max.filter(df.all.Tha,c("PRI"),act.opts = data.frame(w=7,qt=0.5)
 df.all.Tha<-cbind(df.all.Tha,"NDVI.max.filtered"=df.filter_max1$NDVI.max.filtered,
                   "PRI.max.filtered"=df.filter_max2$PRI.max.filtered)%>%
   dplyr::filter(NDVI<=1&NDVI>=0)
-save(df.all.Tha,file = paste0("./data/Tower_based_VIs/Tharandt_SIF_and_VIs.RDA"))
+save(df.all.Tha,file = paste0("./data/Tower_based_VIs/Tharandt_VIs.RDA"))

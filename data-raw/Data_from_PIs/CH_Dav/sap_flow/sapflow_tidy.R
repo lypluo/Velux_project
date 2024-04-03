@@ -4,6 +4,7 @@
 library(tidyverse)
 library(dplyr)
 library(readxl)
+library(lubridate)
 
 #----------------
 #(0)load the data
@@ -12,29 +13,126 @@ library(readxl)
 load.path<-"./data-raw/Data_from_PIs/CH_Dav/sap_flow/"
 files<-list.files(load.path)
 sel_files<-files[grep(".csv",files)]
-df.sap<-read.csv2(paste0(load.path,sel_files),sep = ",")
+df.sap<-read.csv2(paste0(load.path,sel_files[1]),sep = ",")
 df.sap<-df.sap%>%
   mutate(sitename="CH-Dav")
 
-#load the details for different trees:
+#load the details for different trees:DBH and tree height
 df.DBH_H<-read_excel(paste0(load.path,"TreeNumber_details.xlsx"))
 df.DBH_H<-df.DBH_H%>%
   mutate(sitename=Site,Site=NULL)
 
+#load the sap wood area info sent by Roman
+df.A_sapwood<-read.csv2(paste0(load.path,sel_files[2]),sep = ",")
+df.A_sapwood<-df.A_sapwood %>%
+  mutate(TreeNumber=tree_id,tree_id=NULL,
+         sitename="CH-Dav",site_id=NULL,
+         tree_sapwood_thickness_cm=as.numeric(tree_sapwood_thickness_cm))
 #
-df.sap.agg<-left_join(df.sap,df.DBH_H)%>%
-  mutate(Date=as.Date(Date),SFDm=as.numeric(SFDm))
+df.metadata<-left_join(df.DBH_H,df.A_sapwood)%>%
+  #calculate the sap wood area(cm2)
+  mutate(A_sapwood=pi*c(c(DBH/2)^2-(DBH/2 - tree_sapwood_thickness_cm)^2))%>%
+  mutate(sapwood_thick=tree_sapwood_thickness_cm,
+         tree_sapwood_thickness_cm=NULL)
+#
+df.sap.agg<-left_join(df.sap,df.metadata)%>%
+  mutate(Date=as.Date(Date),
+         SFDm=as.numeric(SFDm))
 
 #----------------
 #(1)test plotting
 #----------------
-p.sap.test<-df.sap.agg %>%
+#a.overview:
+df.sap.agg %>%
   group_by(TreeNumber)%>%
   ggplot()+
-  geom_point(aes(Date,SFDm))+
+  geom_point(aes(x=Date,y=SFDm))+
   facet_wrap(~TreeNumber)+
-  theme_light()
+  ylab(expression("SFD (cm h"^-1*")"))
+
+#-------------->
+#b.to briefly check if the SFD density differs in trees with different DBHs:
+#--------------->
+df.sap.agg_Monthly<-df.sap.agg %>%
+  mutate(Year=year(Date),Month=month(Date))%>%
+  ##only select the data after 2021 when all the data seems stable
+  filter(Year>=2021)%>%
+  group_by(DBH,Month)%>%
+  summarise(SFDm_m=mean(SFDm,na.rm=T))
+
+#it seems there is no direct relationship between SFD vs DBH
+df.sap.agg_Monthly%>%
+  ggplot()+
+  geom_point(aes(x=DBH,y=SFDm_m,col=as.factor(DBH)))
+
+#-------------->
+#c.to briefly check the realtionship between DBH and sap wood area
+#--------------->  
+df.metadata %>%
+  ggplot()+
+  geom_point(aes(x=DBH,y=A_sapwood))+
+  stat_smooth(aes(x=DBH,y=A_sapwood),method = 'lm')
 ##
-save.path<-"./test/check_sapflow/"
-ggsave(p.sap.test,filename = paste0(save.path,"Variation_of_SFDm.png"),
-       width = 12,height = 10)
+lm_fit<-lm(A_sapwood ~ DBH,data=df.metadata)
+summary(lm_fit)
+df.test1<-df.metadata %>%
+  mutate(A_sapwood_lm=coef(lm_fit)[1]+DBH*coef(lm_fit)[2])
+
+#
+nls_fit <- nls(A_sapwood ~ a * DBH^b, data = df.metadata, start = list(a = 1, b = 1.5))
+summary(nls_fit)
+df.test2<-df.metadata %>%
+  mutate(A_sapwood_nls=coef(nls_fit)[1]*DBH^coef(nls_fit)[2])
+##finally use the lm_fit for the further analysis
+plot(df.metadata$DBH,df.metadata$A_sapwood)
+points(df.test1$DBH,df.test1$A_sapwood_lm,col="blue")
+points(df.test2$DBH,df.test2$A_sapwood_nls,col="red")
+
+#----------------
+#(2)calculating the sapwood area and get the stand-level sapflow
+#----------------
+#-----
+#a. calculate the sapwood area value for those trees that do not have direct measurements 
+#-----
+#by referring to the relationship constructed by (1c)
+
+df.metadata<-df.metadata %>%
+  mutate(A_sapwood_new=A_sapwood)%>%
+  mutate(A_sapwood_new=ifelse(!is.na(A_sapwood_new),A_sapwood_new,
+        coef(lm_fit)[1]+coef(lm_fit)[2]*DBH))
+
+#updated datasets
+df.sap_final<-left_join(df.sap.agg,df.metadata)
+
+#--------
+#b.calculate the mean sap flow(SF)
+#--------
+#only using the data from 2021 for this calculation:
+df.new<-df.sap_final %>%
+  mutate(Year=year(Date))%>%
+  filter(Year>=2021)%>%
+  #convert sap to mm d-1
+  #SFDm unit: cm h-1(confirmed with Ankit), A_sapwood_new = cm2
+  mutate(
+    #need to over nrow(df.metadata)-->calculate the weighted mean sap area 
+    sap=SFDm*A_sapwood_new/nrow(df.metadata)*24*10*10^-4)
+
+#aggregate different trees to calculate daily mean SF:
+df.sap.daily<-df.new %>%
+  select(Date,TreeNumber,sap)%>%
+  group_by(Date)%>%
+  summarise(sap_m=mean(sap,na.rm=T))
+df.sap.daily %>%
+  ggplot()+
+  geom_point(aes(x=Date,y=sap_m))+
+  ylab(expression("Sap flow (mm d"^-1*")"))
+
+#----------------
+#(3)save the data
+#----------------
+df.all<-list(df.metadata,
+             df.sap.daily)
+names(df.all)<-c("metadata","sap.daily")
+#save the data:
+save.path<-"./data/Sapflow/"
+save(df.sap.daily,file = paste0(save.path,"df.Davos.sap.RDA"))
