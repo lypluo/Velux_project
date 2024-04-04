@@ -107,24 +107,48 @@ df.sap_final<-left_join(df.sap.agg,df.metadata)
 #--------
 #b.calculate the mean sap flow(SF)
 #--------
+#load the tree demographic data:
+load(paste0("./data/Sapflow/df.Dav.Demographics.RDA"))
+df.demo<-df.Dav.sel%>%
+  mutate(DBH_flag=case_when(
+    TREE_DBH<20 ~ "low",
+    TREE_DBH>=20 & TREE_DBH<=40 ~"mid",
+    TREE_DBH>40 ~"high"
+  ))
+#summary the proporation for different DBH classes: low, mid, and high
+df.demo_summary<-df.demo %>%
+  group_by(DBH_flag)%>%
+  summarise(prop=length(DBH_flag)/nrow(df.demo))
+
 #only using the data from 2021 for this calculation:
 df.new<-df.sap_final %>%
+  mutate(DBH_flag=case_when(
+    DBH<20 ~ "low",
+    DBH>=20 & DBH<=40 ~"mid",
+    DBH>40 ~"high"))
+#to link DBH with their trees' demographics:
+df.final<-left_join(df.new,df.demo_summary)%>%
   mutate(Year=year(Date))%>%
   filter(Year>=2021)%>%
   #convert sap to mm d-1
   #SFDm unit: cm h-1(confirmed with Ankit), A_sapwood_new = cm2
+  #calcualte the sap flow:method 1: no weight of demographic info for different DBH classes
   mutate(
     #need to over nrow(df.metadata)-->calculate the weighted mean sap area 
     sap=SFDm*A_sapwood_new/nrow(df.metadata)*24*10*10^-4)
 
 #aggregate different trees to calculate daily mean SF:
-df.sap.daily<-df.new %>%
-  select(Date,TreeNumber,sap)%>%
+df.sap.daily<-df.final %>%
+  select(Date,TreeNumber,sap,SFDm,A_sapwood_new,prop)%>%
   group_by(Date)%>%
-  summarise(sap_m=mean(sap,na.rm=T))
+  summarise(sap_m=mean(sap,na.rm=T),
+            #calcuclate sap flow:method2:consideirng tree demogrphaic info for different DBH calesses
+            sap_m_adj=sum(SFDm * A_sapwood_new*prop,na.rm = T)/sum(A_sapwood_new*prop,na.rm=T)
+            )
 df.sap.daily %>%
   ggplot()+
   geom_point(aes(x=Date,y=sap_m))+
+  geom_point(aes(x=Date,y=sap_m_adj),col="red")+
   ylab(expression("Sap flow (mm d"^-1*")"))
 
 #----------------
