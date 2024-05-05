@@ -160,3 +160,10 @@ names(df.all)<-c("metadata","sap.daily")
 #save the data:
 save.path<-"./data/Sapflow/"
 save(df.sap.daily,file = paste0(save.path,"df.Davos.sap.RDA"))
+
+#save the data for Weigeng's analysis:
+df.sent<-df.sap.daily %>%
+  select(Date,sap_m_adj)%>%
+  mutate(sap_daily=sap_m_adj,sap_m_adj=NULL)
+#save the data in csv:
+write.csv(df.sent,file = paste0(save.path,"Davos_daily_sapflow.csv"))
