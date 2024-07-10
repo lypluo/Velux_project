@@ -1,14 +1,37 @@
 ########################################################
-#Aim: tidy the sap flow density(SFD) sent by Ankit and calculate the stand sap flow
+#Aim: After discussion with Richard, we are aimed to get the better estimation of 
+#stand-level of transpiration (sap flow)
+#data sent by Ankit at end of Mar, 2024
 ########################################################
 library(tidyverse)
 library(dplyr)
 library(readxl)
 library(lubridate)
 
+#logic flow:
+#1) to develop the realationship between Y(sap wood depth)--X(DBH); calculate the relative sap wood depth
+#2) to develop the relationship between Y(Rleative sap flow)--X(Relative sapwood depth)
+
 #----------------
 #(0)load the data
 #----------------
+data.path<-'D:/EE_WSL/IMPACT_project/data_collection/Dav_Data/Other_data_from_collabrators/sap_flow_data/Data_sent_from_RichardPeter/'
+#load the sapwood thickness(depth) data--general data for Norway spruce:
+data_temp1<-readxl::read_xlsx(paste0(data.path,"Sapwood_thickness.xlsx"))
+#load the sapwood thickness(depth) data--data specifically for Davos
+data_temp2<-read.csv(file = paste0(data.path,"Sapwood_thickness_Davos.csv"),sep = ",")
+##first check for the Davos data, if data_temp1 and data_temp2 has some redandecy:
+t_temp1<-data_temp1%>%
+  filter(Site=="DAV1840")%>%
+  filter(Tree %in% paste0("B",c(28:37)))
+#-->by visually the data-->the data_temp1 and data_temp2 are independant-->hence merge two data:
+
+
+
+
+
+
+
 #load the sap flow density (SFD) data:
 load.path<-"./data-raw/Data_from_PIs/CH_Dav/sap_flow/"
 files<-list.files(load.path)
