@@ -7,7 +7,7 @@ library(tidyverse)
 library(dplyr)
 library(readxl)
 library(lubridate)
-
+library(ggpubr) #添加回归方程和R2值
 #logic flow:
 #1) to develop the realationship between Y(sap wood depth)--X(DBH); calculate the relative sap wood depth
 #2) to develop the relationship between Y(Rleative sap flow)--X(Relative sapwood depth)
@@ -15,6 +15,9 @@ library(lubridate)
 #----------------
 #(0)load the data
 #----------------
+#-----------
+#Tree Basic Info:
+#-----------
 data.path<-'D:/EE_WSL/IMPACT_project/data_collection/Dav_Data/Other_data_from_collabrators/sap_flow_data/Data_sent_from_RichardPeter/'
 #load the sapwood thickness(depth) data--general data for Norway spruce:
 data_temp1<-readxl::read_xlsx(paste0(data.path,"Sapwood_thickness.xlsx"))
@@ -25,6 +28,139 @@ t_temp1<-data_temp1%>%
   filter(Site=="DAV1840")%>%
   filter(Tree %in% paste0("B",c(28:37)))
 #-->by visually the data-->the data_temp1 and data_temp2 are independant-->hence merge two data:
+#keep two datasets variables consistent:
+data_temp1<-data_temp1 %>%
+  mutate(SiteCode=Code,Code=NULL,TreeCode=Tree,Tree=NULL)%>%
+  mutate(across(c(StemLength:SWYear),as.numeric))  #convert to numeric values
+
+data_temp2<-data_temp2%>%
+  mutate(site.id=NULL,SiteCode="DAV",
+         TreeID=tree.id,tree.id=NULL,
+         TreeCode=tree.code,tree.code=NULL,
+         Species=tree.species,tree.species=NULL,
+         DBH=diameter.breast.height_cm,diameter.breast.height_cm=NULL,
+         Height=height_m,height_m=NULL,
+         SWThick=sapwood.thickness_cm,sapwood.thickness_cm=NULL,
+         BarkThick=bark.thickness_cm,bark.thickness_cm=NULL,
+         PholemThick=phloem.thickness_mm/10,phloem.thickness_mm=NULL #unit: convert from mm to cm
+         )
+#merge two datasets:
+df.TreeInfo<-full_join(data_temp1,data_temp2)
+
+#-----------
+#Relative sap flow ~ relative sapwood depth data
+#-----------
+df.sap_SWThick<-readxl::read_xlsx(path=paste0(data.path,"Radial_SFD.xlsx"))
+
+#----------------
+#(1)Develop the relationship betwen DBH and SWThick
+#----------------
+#exploring:
+#a.using all the data to develop the linear regression
+ggplot(data=df.TreeInfo)+
+  geom_point(aes(x=DBH,y=SWThick,col=SiteCode),shape=16,size=5)+
+  # geom_smooth(method = "lm", se = FALSE, color = "blue") + # 添加线性回归线
+  stat_smooth(aes(x=DBH,y=SWThick),method = "lm", 
+              # col = "blue", 
+              se = TRUE, level = 0.95) + # 添加置信区间
+  stat_regline_equation(aes(x=DBH,y=SWThick,label = paste(..eq.label.., ..rr.label.., sep = "~~~")), 
+                        label.x = 3, label.y = 10, 
+                        formula = y ~ x) + # 添加回归方程和 R²
+  xlab("DBH (cm)")+
+  ylab("SWThick (cm)")+
+  theme_light()+
+  theme(axis.text = element_text(size=16),
+        axis.title = element_text(size=18))
+
+#b. using the logged data to develop the linear regression
+df.TreeInfo<-df.TreeInfo %>%
+  mutate(DBH_log=log10(DBH),
+         SWThick_log=log10(SWThick)
+         )
+ggplot(data=df.TreeInfo)+
+  geom_point(aes(x=DBH_log,y=SWThick_log,col=SiteCode),shape=16,size=5)+
+  # geom_smooth(method = "lm", se = FALSE, color = "blue") + # 添加线性回归线
+  stat_smooth(aes(x=DBH_log,y=SWThick_log),method = "lm", col = "blue", se = TRUE, level = 0.95) + # 添加置信区间
+  stat_regline_equation(aes(x=DBH_log,y=SWThick_log,label = paste(..eq.label.., ..rr.label.., sep = "~~~")), 
+                        label.x = 1, label.y = 1, 
+                        formula = y ~ x) + # 添加回归方程和 R²
+  xlab("DBH_log (cm)")+
+  ylab("SWThick_log (cm)")+
+  theme_light()+
+  theme(axis.text = element_text(size=16),
+        axis.title = element_text(size=18))
+
+ #c. develop relationship between SWThick with (DBH and Height)
+ lm_2vars<-lm(SWThick ~ DBH + Height,data=df.TreeInfo)  
+ summary(lm_2vars) ##R2=0.24-->Height is non-significant
+
+ #hence-->at the end, adpot the linear relationship between SWThick and DBH
+ 
+ #----------------
+ #(2)Develop the relationship between relative sapwood depth and relative sap flow
+ #----------------
+ library(ggpmisc) #显示拟合方程
+ #check different speices:
+ unique(df.sap_SWThick$Species)
+ df.sap_SWThick<-df.sap_SWThick %>%
+   mutate(x=as.numeric(`Relative depth`),y= as.numeric(`Relative Fd`)) #for easily to plot 
+ #a. only using Norway spruce(Picea abies) data to develop the relationship:
+ ggplot(data=df.sap_SWThick%>%filter(Species=="Picea abies"))+
+   geom_point(aes(x=x,y=y),shape=16,size=5)+
+   stat_smooth(aes(x=x,y=y),method = "loess", 
+               # col = "blue", 
+               se = TRUE, level = 0.95)+
+   # stat_poly_eq(aes(label = after_stat(eq.label)),
+   #              formula = y ~ poly(x, 2, raw = TRUE), # 二次多项式拟合
+   #              parse = TRUE, label.x.npc = "left", label.y.npc = 0.9) + # 在图中显示拟合方程
+   xlab("Relative sapwood depth")+
+   ylab("Relative sap flow")+
+   theme_light()+
+   theme(axis.text = element_text(size=16),
+         axis.title = element_text(size=18))
+   
+ #b. using all the Needle forests data to develop the relationship:
+ ggplot(df.sap_SWThick%>%
+          filter(Species%in%c("Picea abies","Pinus sylvestris","Conifers")))+
+   geom_point(aes(x=`Relative depth`,y=`Relative Fd`,col=Species),shape=16,size=5)+
+   stat_smooth(aes(x=`Relative depth`,y=`Relative Fd`,col=Species),method = "loess", 
+               # col = "blue", 
+               se = TRUE, level = 0.95)+
+   xlab("Relative sapwood depth")+
+   ylab("Relative sap flow")+
+   theme_light()+
+   theme(axis.text = element_text(size=16),
+         axis.title = element_text(size=18))
+ 
+## the pattern are generally similar and finally taking the relationship using the Norway spruce data
+#c. using segmented package to do the segement regression:
+ library(segmented)
+ # 进行线性回归
+ lin.mod <- lm(y ~ x, data = df.sap_SWThick%>%filter(Species=="Picea abies"))
+ # 进行分段回归分析
+ seg.mod <- segmented(lin.mod, seg.Z = ~x, psi = list(x = c(1)))
+ summary(seg.mod)
+ coef(seg.mod)
+ #plotting
+ ggplot(df.sap_SWThick%>%filter(Species=="Picea abies"), aes(x = x, y = y)) +
+   geom_point(shape=16,size=5) + # 添加散点
+   geom_line(aes(y = fitted(lin.mod)), color = "red", 
+             linetype = "dashed",size=1.1) + # 添加初始线性回归线
+   geom_line(aes(y = fitted(seg.mod)), color = "blue",size=1.2) + # 添加分段回归线
+   xlab("Relative sapwood depth")+
+   ylab("Relative sap flow")+
+   theme_light()+
+   theme(axis.text = element_text(size=16),
+         axis.title = element_text(size=18))+
+   annotate("text", x = 1.2, y = 1.1, label = paste("Segment 1: y =", 
+   round(coef(seg.mod)[1], 2), "+", round(coef(seg.mod)[2], 2), "* x",
+   "       x<=1"), color = "blue",size=4) +
+   annotate("text", x = 1.2, y = 1, label = paste("Segment 2: y = 0", 
+   # round(coef(seg.mod)[1] + coef(seg.mod)[3], 2), "+", round(coef(seg.mod)[2] + coef(seg.mod)[4], 2), "* x"), color = "blue")
+   "       x>1"),color="blue",size=4)
+
+
+
 
 
 
