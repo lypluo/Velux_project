@@ -8,9 +8,13 @@ library(dplyr)
 library(readxl)
 library(lubridate)
 library(ggpubr) #添加回归方程和R2值
+library(lubridate)
 #logic flow:
 #1) to develop the realationship between Y(sap wood depth)--X(DBH); calculate the relative sap wood depth
 #2) to develop the relationship between Y(Rleative sap flow)--X(Relative sapwood depth)
+#3）to check the relation between sap flow with DBH-->A.if sap flow density has the direct relationship
+# with DBH, when we estimate stand-level sap flow, we need to consider DBH distibution in study site
+#B) If sap flow density is independent with DBH, we do not need to consider DBH when estimate stand-lve sap flow
 
 #----------------
 #(0)load the data
@@ -51,6 +55,49 @@ df.TreeInfo<-full_join(data_temp1,data_temp2)
 #Relative sap flow ~ relative sapwood depth data
 #-----------
 df.sap_SWThick<-readxl::read_xlsx(path=paste0(data.path,"Radial_SFD.xlsx"))
+
+#-----------
+#DBH and Height information in Davos:
+#data sent by Mana before:
+#-----------
+load.path<-"./data/Sapflow/"
+load(paste0(load.path,"df.Dav.Demographics.RDA"))
+df.DBH_H<-df.Dav.sel%>%
+  select(SITE_ID,TREE_ID,TREE_DBH,TREE_HEIGHT)%>%
+  mutate(sitename=SITE_ID,SITE_ID=NULL)%>%
+  mutate(DBH=TREE_DBH,TREE_DBH=NULL,
+         Height=TREE_HEIGHT,TREE_HEIGHT=NULL)
+
+#-----------
+#sap flow from Davos-->sent by Richard Peter"
+#-----------
+sap.path<-"D:/EE_WSL/IMPACT_project/data_collection/Dav_Data/Other_data_from_collabrators/sap_flow_data/Data_sent_from_RichardPeter/"
+df.sap1<-readRDS(paste0(sap.path,"PCAB_DAV_2010_2019.Rds"))
+df.sap2<-readRDS(paste0(sap.path,"PCAB_DAV_2020_2022.Rds"))
+#
+df.sap1$timestamp<-ymd_hms(df.sap1$timestamp)
+df.sap2$timestamp<-ymd_hms(df.sap2$timestamp)
+#change the variable names"
+df.sap1<-df.sap1 %>%
+  rename_with(~sub("PCAB_","Sap_",.))
+#merge sap1 and sap2:
+df.sap<-bind_rows(df.sap1,df.sap2)
+#aggregate to daily-->original SFD unit:cm3 cm-2 h-1
+df.sap.daily<-df.sap%>%
+  mutate(Date=as.Date(timestamp),HH=hour(timestamp))%>%
+  group_by(Date)%>%
+  summarise(across(c(starts_with("Sap"),"sfd_mean"),sum,na.rm=TRUE))
+#convert the unit of SFD from cm3 cm-2 h-1 to mm m-2 d-1
+df.sap.daily<-df.sap.daily %>%
+  mutate(across(c(starts_with("Sap"),"sfd_mean"),
+                ~ (.*10*24)/c(100*100)))
+#
+df.sap.daily[df.sap.daily==0]<-NA
+  
+#save the sap data:
+save.path<-"./data/Sapflow/"
+save(df.sap,file = paste0(save.path,"df.Davos.sap_hourly_fromRichard.RDA")) #unit:cm3 cm-2 h-1 
+save(df.sap.daily,file = paste0(save.path,"df.Davos.sap_daily_fromRichard.RDA")) #unit: mm m-2 d-1
 
 #----------------
 #(1)Develop the relationship betwen DBH and SWThick
@@ -158,8 +205,15 @@ ggplot(data=df.TreeInfo)+
    annotate("text", x = 1.2, y = 1, label = paste("Segment 2: y = 0", 
    # round(coef(seg.mod)[1] + coef(seg.mod)[3], 2), "+", round(coef(seg.mod)[2] + coef(seg.mod)[4], 2), "* x"), color = "blue")
    "       x>1"),color="blue",size=4)
-
-
+ #----------------
+ #(3)Check the DBH distribution and its relation with sap flow
+ #----------------
+ #a. check the distribution of DBH of trees in Davos:
+ df.DBH_H %>%
+   ggplot(aes(x=DBH))+
+   geom_histogram(aes(y = ..density..),fill="tomato",alpha=0.5)+
+   geom_density(col="blue")+
+   theme_light()
 
 
 
