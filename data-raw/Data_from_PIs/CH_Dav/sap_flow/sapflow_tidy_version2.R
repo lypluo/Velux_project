@@ -58,8 +58,9 @@ df.sap_SWThick<-readxl::read_xlsx(path=paste0(data.path,"Radial_SFD.xlsx"))
 
 #-----------
 #DBH and Height information in Davos:
-#data sent by Mana before:
+#data sent by Mana and Roman before
 #-----------
+#I.Data from Mana-->All the tree DBH and Height info
 load.path<-"./data/Sapflow/"
 load(paste0(load.path,"df.Dav.Demographics.RDA"))
 df.DBH_H<-df.Dav.sel%>%
@@ -67,6 +68,26 @@ df.DBH_H<-df.Dav.sel%>%
   mutate(sitename=SITE_ID,SITE_ID=NULL)%>%
   mutate(DBH=TREE_DBH,TREE_DBH=NULL,
          Height=TREE_HEIGHT,TREE_HEIGHT=NULL)
+#II. Data from Roman-->DBH and Height info only for the trees that have sap flow:
+#load the sap flow density (SFD) data:
+load.path<-"./data-raw/Data_from_PIs/CH_Dav/sap_flow/"
+files<-list.files(load.path)
+sel_files<-files[grep(".csv",files)]
+
+#load the details for different trees:DBH and tree height
+df.DBH_H_Roman<-read_excel(paste0(load.path,"TreeNumber_details.xlsx"))
+df.DBH_H_Roman<-df.DBH_H_Roman%>%
+  mutate(sitename=Site,Site=NULL)
+#load the sap wood area info sent by Roman
+df.A_sapwood_Roman<-read.csv2(paste0(load.path,sel_files[2]),sep = ",")
+df.A_sapwood_Roman<-df.A_sapwood_Roman %>%
+  mutate(TreeNumber=tree_id,tree_id=NULL,
+         sitename="CH-Dav",site_id=NULL,
+         SWThick=as.numeric(tree_sapwood_thickness_cm),
+         tree_sapwood_thickness_cm=NULL
+         )
+#
+df.metadata_Roman<-left_join(df.DBH_H_Roman,df.A_sapwood_Roman)
 
 #-----------
 #sap flow from Davos-->sent by Richard Peter"
@@ -95,9 +116,9 @@ df.sap.daily<-df.sap.daily %>%
 df.sap.daily[df.sap.daily==0]<-NA
   
 #save the sap data:
-save.path<-"./data/Sapflow/"
-save(df.sap,file = paste0(save.path,"df.Davos.sap_hourly_fromRichard.RDA")) #unit:cm3 cm-2 h-1 
-save(df.sap.daily,file = paste0(save.path,"df.Davos.sap_daily_fromRichard.RDA")) #unit: mm m-2 d-1
+# save.path<-"./data/Sapflow/"
+# save(df.sap,file = paste0(save.path,"df.Davos.sap_hourly_fromRichard.RDA")) #unit:cm3 cm-2 h-1 
+# save(df.sap.daily,file = paste0(save.path,"df.Davos.sap_daily_fromRichard.RDA")) #unit: mm m-2 d-1
 
 #----------------
 #(1)Develop the relationship betwen DBH and SWThick
@@ -191,8 +212,8 @@ ggplot(data=df.TreeInfo)+
  #plotting
  ggplot(df.sap_SWThick%>%filter(Species=="Picea abies"), aes(x = x, y = y)) +
    geom_point(shape=16,size=5) + # 添加散点
-   geom_line(aes(y = fitted(lin.mod)), color = "red", 
-             linetype = "dashed",size=1.1) + # 添加初始线性回归线
+   # geom_line(aes(y = fitted(lin.mod)), color = "red", 
+   #           linetype = "dashed",size=1.1) + # 添加初始线性回归线
    geom_line(aes(y = fitted(seg.mod)), color = "blue",size=1.2) + # 添加分段回归线
    xlab("Relative sapwood depth")+
    ylab("Relative sap flow")+
@@ -201,105 +222,83 @@ ggplot(data=df.TreeInfo)+
          axis.title = element_text(size=18))+
    annotate("text", x = 1.2, y = 1.1, label = paste("Segment 1: y =", 
    round(coef(seg.mod)[1], 2), "+", round(coef(seg.mod)[2], 2), "* x",
-   "       x<=1"), color = "blue",size=4) +
+   "       x<=1"), color = "blue",size=6) +
    annotate("text", x = 1.2, y = 1, label = paste("Segment 2: y = 0", 
    # round(coef(seg.mod)[1] + coef(seg.mod)[3], 2), "+", round(coef(seg.mod)[2] + coef(seg.mod)[4], 2), "* x"), color = "blue")
-   "       x>1"),color="blue",size=4)
+   "       x>1"),color="blue",size=6)
  #----------------
  #(3)Check the DBH distribution and its relation with sap flow
  #----------------
- #a. check the distribution of DBH of trees in Davos:
+ #a. check the distribution of DBH of all trees in Davos(data sent by Mana):
  df.DBH_H %>%
    ggplot(aes(x=DBH))+
    geom_histogram(aes(y = ..density..),fill="tomato",alpha=0.5)+
    geom_density(col="blue")+
    theme_light()
+ 
+ #b. check the realtionship betwen SFD (data from Richard) and DBH(data from Roman):
+ #sap data
+ df.sap.daily_adj<-df.sap.daily %>%
+   dplyr::select(c(Date,starts_with("Sap")))%>%
+   pivot_longer(starts_with("Sap"),values_to = "SFD",names_to = "TreeNumber")%>%
+   mutate(TreeNumber=as.numeric(substr(TreeNumber,5,7)))
+ #SWThick and SW area
+ #calculate missing SWThick in df.metadata_Roman based on the relationship build by (1)
+ lm_SWThick_DBH<-lm(SWThick~DBH,data=df.TreeInfo)
+ summary(lm_SWThick_DBH)
+ df.meta_update<-df.metadata_Roman %>%
+   mutate(SWThick=ifelse(!is.na(SWThick),SWThick,
+          coef(lm_SWThick_DBH)[1]+coef(lm_SWThick_DBH)[2]*DBH))
+ #calculate the SW area:
+ df.meta_update<-df.meta_update %>%
+   #calculate the sap wood area(cm2)
+   mutate(A_sapwood=pi*c(c(DBH/2)^2-(DBH/2 - SWThick)^2))
+ #aggregate the daily.sap with meta.data
+ df.sap.agg<-left_join(df.sap.daily_adj,
+                       df.meta_update %>% dplyr::select(TreeNumber:sitename,SWThick:A_sapwood))
+ ##
+ df.sap.agg_Monthly<-df.sap.agg %>%
+   mutate(Year=year(Date),Month=month(Date))%>%
+   group_by(TreeNumber,DBH,A_sapwood,Month)%>%
+   summarise(SFDm_m=mean(SFD,na.rm=T))
+ #-----------------------
+ #exploring with plotting
+ #-----------------------
+ df.sap.agg_Monthly%>%
+   ggplot()+
+   geom_point(aes(x=DBH,y=SFDm_m,col=as.factor(TreeNumber)))+
+   stat_smooth(aes(x=DBH,y=SFDm_m),method = "lm", col = "blue", se = TRUE, level = 0.95) + # 添加置信区间
+   stat_regline_equation(aes(x=DBH,y=SFDm_m,label = paste(..eq.label.., ..rr.label.., sep = "~~~")), 
+                         label.x = 45, label.y = 2.5, 
+                         formula = y ~ x) + # 添加回归方程和 R²
+   xlab("DBH(cm)")+
+   ylab("SFD (mm d-1)")+
+   theme_light()+
+   theme(axis.text = element_text(size=16),
+         axis.title = element_text(size=18))
+ 
+ df.sap.agg_Monthly%>%
+   ggplot()+
+   geom_point(aes(x=A_sapwood,y=SFDm_m,col=as.factor(TreeNumber)))+
+   stat_smooth(aes(x=A_sapwood,y=SFDm_m),method = "lm", col = "blue", se = TRUE, level = 0.95) + # 添加置信区间
+   stat_regline_equation(aes(x=A_sapwood,y=SFDm_m,label = paste(..eq.label.., ..rr.label.., sep = "~~~")), 
+                         label.x = 45, label.y = 2.5, 
+                         formula = y ~ x,size=6) + # 添加回归方程和 R²
+   xlab("A_sapwood(cm2)")+
+   ylab("SFD (mm d-1)")+
+   theme_light()+
+   theme(axis.text = element_text(size=16),
+         axis.title = element_text(size=18))
+ #the results shows the relationship between DBH and SFD has a linear relationship
 
+ 
 
-
-
-
-
-
-
-#load the sap flow density (SFD) data:
-load.path<-"./data-raw/Data_from_PIs/CH_Dav/sap_flow/"
-files<-list.files(load.path)
-sel_files<-files[grep(".csv",files)]
-df.sap<-read.csv2(paste0(load.path,sel_files[1]),sep = ",")
-df.sap<-df.sap%>%
-  mutate(sitename="CH-Dav")
-
-#load the details for different trees:DBH and tree height
-df.DBH_H<-read_excel(paste0(load.path,"TreeNumber_details.xlsx"))
-df.DBH_H<-df.DBH_H%>%
-  mutate(sitename=Site,Site=NULL)
-
-#load the sap wood area info sent by Roman
-df.A_sapwood<-read.csv2(paste0(load.path,sel_files[2]),sep = ",")
-df.A_sapwood<-df.A_sapwood %>%
-  mutate(TreeNumber=tree_id,tree_id=NULL,
-         sitename="CH-Dav",site_id=NULL,
-         tree_sapwood_thickness_cm=as.numeric(tree_sapwood_thickness_cm))
-#
-df.metadata<-left_join(df.DBH_H,df.A_sapwood)%>%
-  #calculate the sap wood area(cm2)
-  mutate(A_sapwood=pi*c(c(DBH/2)^2-(DBH/2 - tree_sapwood_thickness_cm)^2))%>%
-  mutate(sapwood_thick=tree_sapwood_thickness_cm,
-         tree_sapwood_thickness_cm=NULL)
-#
-df.sap.agg<-left_join(df.sap,df.metadata)%>%
-  mutate(Date=as.Date(Date),
-         SFDm=as.numeric(SFDm))
-
-#----------------
-#(1)test plotting
-#----------------
-#a.overview:
-df.sap.agg %>%
-  group_by(TreeNumber)%>%
-  ggplot()+
-  geom_point(aes(x=Date,y=SFDm))+
-  facet_wrap(~TreeNumber)+
-  ylab(expression("SFD (cm h"^-1*")"))
-
-#-------------->
-#b.to briefly check if the SFD density differs in trees with different DBHs:
-#--------------->
-df.sap.agg_Monthly<-df.sap.agg %>%
-  mutate(Year=year(Date),Month=month(Date))%>%
-  ##only select the data after 2021 when all the data seems stable
-  filter(Year>=2021)%>%
-  group_by(DBH,Month)%>%
-  summarise(SFDm_m=mean(SFDm,na.rm=T))
-
-#it seems there is no direct relationship between SFD vs DBH
-df.sap.agg_Monthly%>%
-  ggplot()+
-  geom_point(aes(x=DBH,y=SFDm_m,col=as.factor(DBH)))
-
-#-------------->
-#c.to briefly check the realtionship between DBH and sap wood area
-#--------------->  
-df.metadata %>%
-  ggplot()+
-  geom_point(aes(x=DBH,y=A_sapwood))+
-  stat_smooth(aes(x=DBH,y=A_sapwood),method = 'lm')
-##
-lm_fit<-lm(A_sapwood ~ DBH,data=df.metadata)
-summary(lm_fit)
-df.test1<-df.metadata %>%
-  mutate(A_sapwood_lm=coef(lm_fit)[1]+DBH*coef(lm_fit)[2])
-
-#
-nls_fit <- nls(A_sapwood ~ a * DBH^b, data = df.metadata, start = list(a = 1, b = 1.5))
-summary(nls_fit)
-df.test2<-df.metadata %>%
-  mutate(A_sapwood_nls=coef(nls_fit)[1]*DBH^coef(nls_fit)[2])
-##finally use the lm_fit for the further analysis
-plot(df.metadata$DBH,df.metadata$A_sapwood)
-points(df.test1$DBH,df.test1$A_sapwood_lm,col="blue")
-points(df.test2$DBH,df.test2$A_sapwood_nls,col="red")
+ 
+ ###working to here!!
+ 
+ 
+ 
+ 
 
 #----------------
 #(2)calculating the sapwood area and get the stand-level sapflow
