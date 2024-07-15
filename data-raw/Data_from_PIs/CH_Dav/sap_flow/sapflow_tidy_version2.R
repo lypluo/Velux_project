@@ -9,6 +9,7 @@ library(readxl)
 library(lubridate)
 library(ggpubr) #添加回归方程和R2值
 library(lubridate)
+library(cowplot)
 #logic flow:
 #1) to develop the realationship between Y(sap wood depth)--X(DBH); calculate the relative sap wood depth
 #2) to develop the relationship between Y(Rleative sap flow)--X(Relative sapwood depth)
@@ -64,7 +65,7 @@ df.sap_SWThick<-readxl::read_xlsx(path=paste0(data.path,"Radial_SFD.xlsx"))
 load.path<-"./data/Sapflow/"
 load(paste0(load.path,"df.Dav.Demographics.RDA"))
 df.DBH_H<-df.Dav.sel%>%
-  select(SITE_ID,TREE_ID,TREE_DBH,TREE_HEIGHT)%>%
+  dplyr::select(SITE_ID,TREE_ID,TREE_DBH,TREE_HEIGHT)%>%
   mutate(sitename=SITE_ID,SITE_ID=NULL)%>%
   mutate(DBH=TREE_DBH,TREE_DBH=NULL,
          Height=TREE_HEIGHT,TREE_HEIGHT=NULL)
@@ -114,10 +115,45 @@ df.sap.daily<-df.sap.daily %>%
                 ~ (.*10*24)/c(100*100)))
 #
 df.sap.daily[df.sap.daily==0]<-NA
-  
+df.sap_Richard<-df.sap.daily %>%
+  mutate(sfd_mean=NULL)%>%
+  pivot_longer(starts_with("Sap"),values_to = "SFDm",names_to = "TreeNumber")%>%
+  mutate(TreeNumber=as.numeric(substr(TreeNumber,5,7)))
+
+###compare with the data from Ankit:
+load.path<-"./data-raw/Data_from_PIs/CH_Dav/sap_flow/"
+df.sap_Ankit<-read.csv2(paste0(load.path,"Dav_SFD_2010_2023_Daily_15trees.csv"),sep = ",")
+#checking if the data is consistent:
+df1_test<-df.sap_Richard %>%
+  mutate(data_source="FromRichard")
+df2_test<-df.sap_Ankit %>%
+  mutate(data_source="FromAnkit")
+#
+df_test<-rbind(df1_test,df2_test)
+df_test<-df_test %>%
+  mutate(SFDm=as.numeric(SFDm))%>%
+  filter(!is.na(SFDm))
+p_test1<-df_test %>%
+  filter(data_source=="FromRichard")%>%
+  group_by(TreeNumber)%>%
+  ggplot()+
+  geom_point(aes(x=Date,y=SFDm),alpha=0.6,col="black")+
+  facet_wrap(.~TreeNumber)
+p_test2<-df_test %>%
+  filter(data_source=="FromAnkit")%>%
+  group_by(TreeNumber)%>%
+  ggplot()+
+  geom_point(aes(x=Date,y=SFDm),alpha=0.6,col="tomato")+
+  facet_wrap(.~TreeNumber)
+p_comp<-plot_grid(p_test1,p_test2,ncol=2)
+#the comparison show the datasets are different-->hence, adopt the Richard's data-->adjusted data
+ggsave(p_comp,file=paste0("./test/check_sapflow/","compare_sapflow.png"),width = 10,height = 5)
+
+df.sap<-df.sap
+df.sap.daily<-df.sap.daily
 #save the sap data:
 # save.path<-"./data/Sapflow/"
-# save(df.sap,file = paste0(save.path,"df.Davos.sap_hourly_fromRichard.RDA")) #unit:cm3 cm-2 h-1 
+# save(df.sap,file = paste0(save.path,"df.Davos.sap_hourly_fromRichard.RDA")) #unit:cm3 cm-2 h-1
 # save(df.sap.daily,file = paste0(save.path,"df.Davos.sap_daily_fromRichard.RDA")) #unit: mm m-2 d-1
 
 #----------------
@@ -221,11 +257,12 @@ ggplot(data=df.TreeInfo)+
    theme(axis.text = element_text(size=16),
          axis.title = element_text(size=18))+
    annotate("text", x = 1.2, y = 1.1, label = paste("Segment 1: y =", 
-   round(coef(seg.mod)[1], 2), "+", round(coef(seg.mod)[2], 2), "* x",
+   round(coef(seg.mod)[1], 2), "", round(coef(seg.mod)[2], 2), "* x",
    "       x<=1"), color = "blue",size=6) +
    annotate("text", x = 1.2, y = 1, label = paste("Segment 2: y = 0", 
    # round(coef(seg.mod)[1] + coef(seg.mod)[3], 2), "+", round(coef(seg.mod)[2] + coef(seg.mod)[4], 2), "* x"), color = "blue")
    "       x>1"),color="blue",size=6)
+
  #----------------
  #(3)Check the DBH distribution and its relation with sap flow
  #----------------
@@ -239,8 +276,8 @@ ggplot(data=df.TreeInfo)+
  #b. check the realtionship betwen SFD (data from Richard) and DBH(data from Roman):
  #sap data
  df.sap.daily_adj<-df.sap.daily %>%
-   dplyr::select(c(Date,starts_with("Sap")))%>%
-   pivot_longer(starts_with("Sap"),values_to = "SFD",names_to = "TreeNumber")%>%
+   mutate(sfd_mean=NULL)%>%
+   pivot_longer(starts_with("Sap"),values_to = "SFDm",names_to = "TreeNumber")%>%
    mutate(TreeNumber=as.numeric(substr(TreeNumber,5,7)))
  #SWThick and SW area
  #calculate missing SWThick in df.metadata_Roman based on the relationship build by (1)
@@ -260,10 +297,25 @@ ggplot(data=df.TreeInfo)+
  df.sap.agg_Monthly<-df.sap.agg %>%
    mutate(Year=year(Date),Month=month(Date))%>%
    group_by(TreeNumber,DBH,A_sapwood,Month)%>%
-   summarise(SFDm_m=mean(SFD,na.rm=T))
+   summarise(SFDm_m=mean(as.numeric(SFDm),na.rm=T))
  #-----------------------
- #exploring with plotting
+ #exploring sap.Monthly with DBH with plotting
  #-----------------------
+ #the results shows the relationship between DBH and SFD has a linear relationship
+ #check using the daily data
+ # df.sap.agg %>%
+ #   ggplot()+
+ #   geom_point(aes(x=DBH,y=SFDm,col=as.factor(TreeNumber)))+
+ #   stat_smooth(aes(x=DBH,y=SFDm),method = "lm", col = "blue", se = TRUE, level = 0.95) + # 添加置信区间
+ #   stat_regline_equation(aes(x=DBH,y=SFDm,label = paste(..eq.label.., ..rr.label.., sep = "~~~")),
+ #                         label.x = 45, label.y = 2.5,
+ #                         formula = y ~ x) + # 添加回归方程和 R²
+ #   xlab("DBH(cm)")+
+ #   ylab("SFD (mm d-1)")+
+ #   theme_light()+
+ #   theme(axis.text = element_text(size=16),
+ #         axis.title = element_text(size=18))
+ 
  df.sap.agg_Monthly%>%
    ggplot()+
    geom_point(aes(x=DBH,y=SFDm_m,col=as.factor(TreeNumber)))+
@@ -289,93 +341,82 @@ ggplot(data=df.TreeInfo)+
    theme_light()+
    theme(axis.text = element_text(size=16),
          axis.title = element_text(size=18))
- #the results shows the relationship between DBH and SFD has a linear relationship
-
  
-
+ #----------------
+ #(4)calculate the stand-level sap flow:
+ #----------------
+ #Now I will use two ways of approach to estimate the stand-level sapflow:
+ #A.sap flow data only based no the DBH classes
+ #B. based on the SFD linear relationship with DBH(monthly data)-->based on tree demographics in Davos,
+ #calculate the weight-averaged stand-level sap flow:
+ #C. based on 1) the relationship between relative SFD and relative SWthick, 2) based on DBH classes
  
- ###working to here!!
  
+ #A.first approach-->do not consider the variation of sap-flow in depth for each trees
+ lm_SFD_DBH<-lm(SFDm_m ~ DBH,data=df.sap.agg_Monthly)
+ summary(lm_SFD_DBH)
  
+ #demographics of trees in Davos:
+ hist(df.DBH_H$DBH)
  
- 
-
-#----------------
-#(2)calculating the sapwood area and get the stand-level sapflow
-#----------------
-#-----
-#a. calculate the sapwood area value for those trees that do not have direct measurements 
-#-----
-#by referring to the relationship constructed by (1c)
-
-df.metadata<-df.metadata %>%
-  mutate(A_sapwood_new=A_sapwood)%>%
-  mutate(A_sapwood_new=ifelse(!is.na(A_sapwood_new),A_sapwood_new,
-        coef(lm_fit)[1]+coef(lm_fit)[2]*DBH))
-
-#updated datasets
-df.sap_final<-left_join(df.sap.agg,df.metadata)
-
-#--------
-#b.calculate the mean sap flow(SF)
-#--------
-#load the tree demographic data:
-load(paste0("./data/Sapflow/df.Dav.Demographics.RDA"))
-df.demo<-df.Dav.sel%>%
-  mutate(DBH_flag=case_when(
-    TREE_DBH<20 ~ "low",
-    TREE_DBH>=20 & TREE_DBH<=40 ~"mid",
-    TREE_DBH>40 ~"high"
-  ))
-#summary the proporation for different DBH classes: low, mid, and high
-df.demo_summary<-df.demo %>%
+ #estimate all the trees SFD in Davos (currently only considering the trees with DBH >20 cm)
+ #becuase of all the trees with sap flow are >20
+ df.DBH_reclass<-df.DBH_H %>%
+   filter(DBH>=20)%>%
+   #categories the trees with different DBH classes
+   mutate(DBH_flag=case_when(
+     # DBH<20 ~ "<20",
+     DBH>=20 & DBH<=30 ~"20-30",
+     DBH>=30 & DBH<=40 ~"30-40",
+     DBH>=40 & DBH<=50 ~"40-50",
+     DBH>50 ~">50"
+     ))
+ df.DBH_sum<-df.DBH_reclass %>%
   group_by(DBH_flag)%>%
-  summarise(prop=length(DBH_flag)/nrow(df.demo))
-
-#only using the data from 2021 for this calculation:
-df.new<-df.sap_final %>%
-  mutate(DBH_flag=case_when(
-    DBH<20 ~ "low",
-    DBH>=20 & DBH<=40 ~"mid",
-    DBH>40 ~"high"))
-#to link DBH with their trees' demographics:
-df.final<-left_join(df.new,df.demo_summary)%>%
-  mutate(Year=year(Date))%>%
-  filter(Year>=2021)%>%
-  #convert sap to mm d-1
-  #SFDm unit: cm h-1(confirmed with Ankit), A_sapwood_new = cm2
-  #calcualte the sap flow:method 1: no weight of demographic info for different DBH classes
-  mutate(
-    #need to over nrow(df.metadata)-->calculate the weighted mean sap area 
-    sap=SFDm*A_sapwood_new/nrow(df.metadata)*24*10*10^-4)
-
-#aggregate different trees to calculate daily mean SF:
-df.sap.daily<-df.final %>%
-  select(Date,TreeNumber,sap,SFDm,A_sapwood_new,prop)%>%
-  group_by(Date)%>%
-  summarise(sap_m=mean(sap,na.rm=T),
-            #calcuclate sap flow:method2:consideirng tree demogrphaic info for different DBH calesses
-            sap_m_adj=sum(SFDm * A_sapwood_new*prop,na.rm = T)/sum(A_sapwood_new*prop,na.rm=T)
-            )
-df.sap.daily %>%
-  ggplot()+
-  geom_point(aes(x=Date,y=sap_m))+
-  geom_point(aes(x=Date,y=sap_m_adj),col="red")+
-  ylab(expression("Sap flow (mm d"^-1*")"))
-
+  summarise(prop=length(DBH_flag)/nrow(df.DBH_reclass))
+ #-------------------
+ #estimate stand-level sap flow
+ #------------------
+ df.sap.agg_f<-df.sap.agg %>%
+   mutate(DBH_flag=case_when(
+     # DBH<20 ~ "<20",
+     DBH>=20 & DBH<=30 ~"20-30",
+     DBH>=30 & DBH<=40 ~"30-40",
+     DBH>=40 & DBH<=50 ~"40-50",
+     DBH>50 ~">50"
+   ))
+ #
+ df.sap.agg_f<-left_join(df.sap.agg_f,df.DBH_sum)
+ #stand-level daily SFD
+ df_stand.sap.daily<-df.sap.agg_f %>%
+   group_by(Date)%>%
+   summarise(SFD_mean=mean(SFDm,na.rm=T),
+             #calcuclate sap flow:method2:consideirng tree demogrphaic info for different DBH calesses
+             SFD_mean_adj=sum(SFDm*A_sapwood*prop,na.rm = T)/sum(A_sapwood*prop,na.rm=T)
+   )
+ df_stand.sap.daily %>%
+   ggplot()+
+   geom_point(aes(x=Date,y=SFD_mean,col="SFD_mean"))+
+   geom_point(aes(x=Date,y=SFD_mean_adj,col="Adjusted SFD_mean"))+
+   ylab(expression("Sap flow (mm d"^-1*")"))
+ 
+ #B and C approach are both too complicated to calculate-->hence only using method A to calculate the stand-level sap flow
+ #C. considering the variation of sap flow in different depth
+ #calculate the relative SWThick:
+d
 #----------------
-#(3)save the data
+#(5)save the data
 #----------------
-df.all<-list(df.metadata,
-             df.sap.daily)
-names(df.all)<-c("metadata","sap.daily")
+df.all<-list(df.meta_update,
+             df_stand.sap.daily)
+names(df.all)<-c("metadata","stand.sap.daily")
 #save the data:
 save.path<-"./data/Sapflow/"
-save(df.sap.daily,file = paste0(save.path,"df.Davos.sap.RDA"))
+save(df_stand.sap.daily,file = paste0(save.path,"df.Davos.sap_daily_fromRichard.RDA"))
 
 #save the data for Weigeng's analysis:
-df.sent<-df.sap.daily %>%
-  select(Date,sap_m_adj)%>%
-  mutate(sap_daily=sap_m_adj,sap_m_adj=NULL)
+df.sent<-df_stand.sap.daily %>%
+  dplyr::select(Date,SFD_mean_adj)%>%
+  mutate(sap_daily=SFD_mean_adj,SFD_mean_adj=NULL)
 #save the data in csv:
-write.csv(df.sent,file = paste0(save.path,"Davos_daily_sapflow.csv"))
+write.csv(df.sent,file = paste0(save.path,"Davos_daily_sapflow_sent.csv"))
