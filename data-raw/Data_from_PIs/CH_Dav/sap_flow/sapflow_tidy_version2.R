@@ -138,13 +138,15 @@ p_test1<-df_test %>%
   group_by(TreeNumber)%>%
   ggplot()+
   geom_point(aes(x=Date,y=SFDm),alpha=0.6,col="black")+
-  facet_wrap(.~TreeNumber)
+  facet_wrap(.~TreeNumber)+
+  ylab("SFD (mm d-1)-Richard")
 p_test2<-df_test %>%
   filter(data_source=="FromAnkit")%>%
   group_by(TreeNumber)%>%
   ggplot()+
   geom_point(aes(x=Date,y=SFDm),alpha=0.6,col="tomato")+
-  facet_wrap(.~TreeNumber)
+  facet_wrap(.~TreeNumber)+
+  ylab("SFD (mm d-1)-Ankit")
 p_comp<-plot_grid(p_test1,p_test2,ncol=2)
 #the comparison show the datasets are different-->hence, adopt the Richard's data-->adjusted data
 ggsave(p_comp,file=paste0("./test/check_sapflow/","compare_sapflow.png"),width = 10,height = 5)
