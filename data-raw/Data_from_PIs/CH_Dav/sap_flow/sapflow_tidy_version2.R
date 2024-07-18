@@ -349,10 +349,10 @@ ggplot(data=df.TreeInfo)+
  #----------------
  #Now I will use two ways of approach to estimate the stand-level sapflow:
  #A.sap flow data only based no the DBH classes
- #B. based on the SFD linear relationship with DBH(monthly data)-->based on tree demographics in Davos,
+ #B. based on 1) the relationship between relative SFD and relative SWthick, 2) based on DBH classes
+ #C. based on 1) the relationship between relative SFD and relative SWthick,
+ #2)the SFD linear relationship with DBH (monthly data)-->based on tree demographics in Davos,
  #calculate the weight-averaged stand-level sap flow:
- #C. based on 1) the relationship between relative SFD and relative SWthick, 2) based on DBH classes
- 
  
  #A.first approach-->do not consider the variation of sap-flow in depth for each trees
  lm_SFD_DBH<-lm(SFDm_m ~ DBH,data=df.sap.agg_Monthly)
@@ -389,23 +389,98 @@ ggplot(data=df.TreeInfo)+
    ))
  #
  df.sap.agg_f<-left_join(df.sap.agg_f,df.DBH_sum)
- #stand-level daily SFD
- df_stand.sap.daily<-df.sap.agg_f %>%
+ #stand-level daily SFD--taking consideration of ratio of diferent DBH classes 
+ df_stand.sap.daily_1<-df.sap.agg_f %>%
    group_by(Date)%>%
    summarise(SFD_mean=mean(SFDm,na.rm=T),
              #calcuclate sap flow:method2:consideirng tree demogrphaic info for different DBH calesses
-             SFD_mean_adj=sum(SFDm*A_sapwood*prop,na.rm = T)/sum(A_sapwood*prop,na.rm=T)
+             SFD_mean_adj_1=sum(SFDm*A_sapwood/10000*prop,na.rm = T)/sum(A_sapwood/10000*prop,na.rm=T)
+   )
+ df_stand.sap.daily_1 %>%
+   ggplot()+
+   geom_point(aes(x=Date,y=SFD_mean,col="SFD_mean"))+
+   geom_point(aes(x=Date,y=SFD_mean_adj_1,col="Adjusted SFD_mean"))+
+   ylab(expression("SFD (mm d"^-1*")"))
+ 
+ #B. considering the variation of sap flow in different depth
+ #calculate the relative SWThick-->assume the SFDmax=SFDm
+ #(actually the sap flow needle integrates the thermal dissipation in outer 2 cm):
+ #Method B could also have big uncertainty-->As SFD with 10 trees (with different DBH classes) 
+ #may not well represent SFD distribution in different DBH classes.
+ df.sap.agg_f_add1<-df.sap.agg_f %>%
+   mutate(SFDmax=SFDm,   #calculate the maximum SFDmax
+          )
+ #1) based on the segmented regression between relative SFD and relative SWdepth(developed in (2)):
+ seg.mod <- segmented(lin.mod, seg.Z = ~x, psi = list(x = c(1)))
+ summary(seg.mod)
+ coef(seg.mod)
+ b=as.numeric(round(coef(seg.mod)[1],4));k=as.numeric(round(coef(seg.mod)[2],4))
+ #2) and based on the integral formula I deduce: see the slides I sent to Richard：
+ df.sap_integral1<-df.sap.agg_f_add1%>%
+   mutate(SF_integral=b*SFDmax*c(SWThick/100) + (1/8*k*SFDmax*(DBH/100)^2*c(SWThick/100)) 
+          - 1/3*k*SFDmax*(DBH/100)*c(SWThick/100)^2 + 1/4*k*SFDmax*c(SWThick/100)^4)%>%
+   mutate(SFD_integral=SF_integral/c(A_sapwood/10000))
+ #stand-level daily SFD--taking consideration of ratio of diferent DBH classes 
+ df_stand.sap.daily_2<-df.sap_integral1 %>%
+   group_by(Date)%>%
+   summarise(
+             SFD_mean=mean(SFDm,na.rm=T),
+             #calcuclate sap flow:method2:consideirng tree demogrphaic info for different DBH calesses
+             SFD_mean_adj_2=sum(SFD_integral*A_sapwood/10000*prop,na.rm = T)/sum(A_sapwood/10000*prop,na.rm=T)
+   )
+ df_stand.sap.daily_2 %>%
+   ggplot()+
+   geom_point(aes(x=Date,y=SFD_mean,col="SFD_mean"))+
+   geom_point(aes(x=Date,y=SFD_mean_adj_2,col="Adjusted SFD_mean"))+
+   ylab(expression("SFD (mm d"^-1*")"))
+ 
+ #C. 1)considering the variation of sap flow in different depth and 2) considering
+ #maximum sap flow (assign as the sap flow value) varies with DBH (develop in (3))-->this method does not work well
+ #########--do not use the results from this method######
+ # lm_sap_DBH<-lm(SFDm_m ~ DBH,data=df.sap.agg_Monthly)
+ # summary(lm_sap_DBH)
+ # #
+ # df.sap.agg_f_add2<-df.sap.agg_f %>%
+ #   mutate(SFDmax=coef(lm_sap_DBH)[1]+coef(lm_sap_DBH)[2]*DBH,   #calculate the maximum SFDmax
+ #   )  #SFDmax is fixed for whole year
+ # #
+ # df.sap_integral2<-df.sap.agg_f_add2%>%
+ #   mutate(SF_integral=b*SFDmax*c(SWThick/100) + (1/8*k*SFDmax*(DBH/100)^2*c(SWThick/100)) 
+ #          - 1/3*k*SFDmax*(DBH/100)*c(SWThick/100)^2 + 1/4*k*SFDmax*c(SWThick/100)^4)%>%
+ #   mutate(SFD_integral=SF_integral/c(A_sapwood/10000))  #considering radial variation of sap flow
+ # 
+ # #stand-level daily SFD--taking consideration of sap wood area in all trees
+ # df_stand.sap.daily_3<-df.sap_integral2 %>%
+ #   group_by(Date)%>%
+ #   summarise(
+ #     SFD_mean=mean(SFDm,na.rm=T),
+ #     #calcuclate sap flow:method2:consideirng tree demogrphaic info for different DBH calesses
+ #     SFD_mean_adj_3=sum(SFD_integral*(A_sapwood/10000),na.rm = T)/sum(A_sapwood/10000,na.rm=T)
+ #   )
+ # df_stand.sap.daily_3 %>%
+ #   ggplot()+
+ #   geom_point(aes(x=Date,y=SFD_mean,col="SFD_mean"))+
+ #   geom_point(aes(x=Date,y=SFD_mean_adj_3,col="Adjusted SFD_mean"))+
+ #   ylab(expression("SFD (mm d"^-1*")"))
+ #########################
+ 
+ ##aggregate the SFD:
+ df_stand.sap.daily<-cbind(df_stand.sap.daily_1,"SFD_mean_adj_2"=df_stand.sap.daily_2$SFD_mean_adj_2)
+ ## 
+ df_stand.sap.daily<-df_stand.sap.daily %>%
+   dplyr::select(Date,SFD_mean,SFD_mean_adj_1,SFD_mean_adj_2)%>%
+   mutate(
+     SFD_daily_mean=ifelse(SFD_mean!=0,SFD_mean,NA),SFD_mean=NULL,
+     SFD_daily_mean_M1=ifelse(SFD_mean_adj_1!=0,SFD_mean_adj_1,NA),SFD_mean_adj_1=NULL,
+     SFD_daily_mean_M2=ifelse(SFD_mean_adj_2!=0,SFD_mean_adj_2,NA),SFD_mean_adj_2=NULL
    )
  df_stand.sap.daily %>%
    ggplot()+
-   geom_point(aes(x=Date,y=SFD_mean,col="SFD_mean"))+
-   geom_point(aes(x=Date,y=SFD_mean_adj,col="Adjusted SFD_mean"))+
-   ylab(expression("Sap flow (mm d"^-1*")"))
- 
- #B and C approach are both too complicated to calculate-->hence only using method A to calculate the stand-level sap flow
- #C. considering the variation of sap flow in different depth
- #calculate the relative SWThick:
-d
+   geom_point(aes(x=Date,y=SFD_daily_mean,col="SFD_mean"),alpha=0.8)+
+   geom_point(aes(x=Date,y=SFD_daily_mean_M1,col="Adjusted SFD_mean:Method 1"),alpha=0.8)+
+   geom_point(aes(x=Date,y=SFD_daily_mean_M2,col="Adjusted SFD_mean:Method 2"),alpha=0.8)+
+   ylab(expression("SFD (mm d"^-1*")"))
+
 #----------------
 #(5)save the data
 #----------------
@@ -417,8 +492,8 @@ save.path<-"./data/Sapflow/"
 save(df_stand.sap.daily,file = paste0(save.path,"df.Davos.sap_daily_fromRichard.RDA"))
 
 #save the data for Weigeng's analysis:
-df.sent<-df_stand.sap.daily %>%
-  dplyr::select(Date,SFD_mean_adj)%>%
-  mutate(sap_daily=SFD_mean_adj,SFD_mean_adj=NULL)
+df.sent<-df_stand.sap.daily%>%
+  dplyr::select(Date,SFD_daily_mean_M1,SFD_daily_mean_M2)
 #save the data in csv:
 write.csv(df.sent,file = paste0(save.path,"Davos_daily_sapflow_sent.csv"))
+
