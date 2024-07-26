@@ -33,7 +33,7 @@ names(df.dendro)<-paste0("Tree_",c(356))
 #(2) aggregate the data to hourly:
 #---------------
 agg_hourly<-function(df){
-  df<-df.dendro$Tree_356
+  # df<-df.dendro$Tree_356
   #
   df.proc<-df %>%
     mutate(Tree_ID=series_id,series_id=NULL,
@@ -43,7 +43,35 @@ agg_hourly<-function(df){
            )%>%
     mutate(Date=as.Date(rDate),Hour=hour(rDate))
   #
-  plot(df.proc$Date,df.proc$dendro_ori)
-  
+  # plot(df.proc$Date,df.proc$dendro_ori)
+  #aggregate the data to hourly:
+  df.proc_H<-df.proc %>%
+    #format of data
+    mutate(rDate=ymd_hms(rDate),dendro_ori=as.numeric(dendro_ori))%>%
+    mutate(Year=year(rDate),rDate_H=floor_date(rDate,"hour"))%>%
+    group_by(Tree_ID,rDate_H)%>%
+    summarise(dendro_H=mean(dendro_ori,na.rm = T))
+#
+  return(df.proc_H)
   
 }
+
+#aggregate the data for Tree_356 to hourly:
+df.dendro_T356<-agg_hourly(df.dendro$Tree_356)
+
+#---------------
+#(3) calculate the maximum and minimum daily xylem diamter
+#---------------
+df.dendro_T356_Daily<-df.dendro_T356 %>%
+  mutate(Date=as_date(rDate_H))%>%
+  group_by(Tree_ID,Date)%>%
+  summarise(dendro_D_mean=mean(dendro_H),
+            dendro_D_max=max(dendro_H),
+            dendro_D_min=min(dendro_H),
+            delta_dendro_D=dendro_D_max - dendro_D_min)
+  summarise()
+  
+##save the data:
+  save.path<-"./data/Tree_growth/"
+  save(df.dendro_T356_Daily,file = paste0(save.path,"df.dendro_T356_Daily.RDA"))
+  

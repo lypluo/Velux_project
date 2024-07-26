@@ -108,6 +108,11 @@ save(df_DD,file = paste0(save.path,"df_daily_from_ICOS.RDA"))
 df.Dav.HH_19972018<-read.csv(file=paste0(base.path,"CH-Dav/1997-2018/",Davos_files1[2]),header = T)
 df.Dav.HH_20192023<-read.csv(file=paste0(base.path,"CH-Dav/2019-2023/",Davos_files2[2]),header = T)
 
+#one additional check: when VPDmax happens
+df_Dav_test<-df.Dav.HH_19972018 %>%
+  mutate(Hour=hour(ymd_hm(TIMESTAMP_START)))
+plot(df_Dav_test$Hour,df_Dav_test$VPD_F) #normally happens at 14-15
+
 ##for the analysis: only keep the data in the midday period(10-14):
 df.Dav.HH_19972018<-df.Dav.HH_19972018%>%
   mutate(Hour=hour(ymd_hm(TIMESTAMP_START)))%>%

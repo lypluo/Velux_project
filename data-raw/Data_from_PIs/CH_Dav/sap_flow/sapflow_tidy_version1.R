@@ -160,7 +160,7 @@ df.all<-list(df.metadata,
 names(df.all)<-c("metadata","sap.daily")
 #save the data:
 save.path<-"./data/Sapflow/"
-save(df.sap.daily,file = paste0(save.path,"df.Davos.sap_fromAnkit.RDA"))
+save(df.sap.daily,file = paste0(save.path,"df.Davos.sap_daily_fromAnkit.RDA"))
 
 #save the data for Weigeng's analysis:
 df.sent<-df.sap.daily %>%
