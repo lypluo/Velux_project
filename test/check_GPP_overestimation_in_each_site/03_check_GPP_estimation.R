@@ -8,6 +8,7 @@
 library(tidyverse)
 library(dplyr)
 library(lubridate)
+library(phe)
 #----------------------
 #(1)load the data
 #----------------------
@@ -183,6 +184,7 @@ sites<-c("FI-Hyy","NL-Loo","DE-Tha","CH-Dav")
 ###method 1: comparing EC GPP with GPP simulated by P-model
 #source the functions:
 source("./R/separate_norm_GPPmismatch_period_trs_diff0_3SD.R")
+
 ###one test example:###
 #update in Oct,2022-->the simulated GPP from P-model should has some probelm,
 #as now there is no spring gpp overestimation anymore in four sites.

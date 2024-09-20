@@ -18,7 +18,7 @@ df.Tha<-read.csv(paste0(base.path,"Meteo_and_flux_composite_download/ICOSETC_DE-
             "ICOSETC_DE-Tha_FLUXNET_DD_INTERIM_L2.csv"))
 df.Tha.daily<-df.Tha %>%
   #P_F values in 2023 are -9999
-  select(TIMESTAMP,TA_F,SW_IN_F,VPD_F,P_F,PPFD_IN,
+  dplyr::select(TIMESTAMP,TA_F,SW_IN_F,VPD_F,P_F,PPFD_IN,
          PPFD_OUT,PPFD_DIF,TS_F_MDS_1:TS_F_MDS_5,
          SWC_F_MDS_1:SWC_F_MDS_4,
          NEE_VUT_REF,RECO_NT_VUT_REF,GPP_NT_VUT_REF)%>%
@@ -47,7 +47,7 @@ df.Tha.daily[df.Tha.daily==-9999]<-NA
 df.Tha.more<-read.csv(paste0(base.path,"Meteo_download/ICOSETC_DE-Tha_METEO_L2/",
                              "ICOSETC_DE-Tha_METEO_L2.csv"))
 df.Tha.snow_and_P<-df.Tha.more %>%
-  select(TIMESTAMP_START,TIMESTAMP_END,D_SNOW,P)%>%
+  dplyr::select(TIMESTAMP_START,TIMESTAMP_END,D_SNOW,P)%>%
   mutate(TIMESTAMP_START=ymd_hm(TIMESTAMP_START),
          TIMESTAMP_END=ymd_hm(TIMESTAMP_END),
          Date=as.Date(TIMESTAMP_END))
@@ -86,10 +86,10 @@ df.Dav<-read.csv(paste0(base.path,"Meteo_download/ICOSETC_CH-Dav_METEO_NRT/",
                         "ICOSETC_CH-Dav_METEO_NRT.csv"))
 #select variables:
 df.Dav<-df.Dav %>%
-  select(TIMESTAMP_START,TIMESTAMP_END,SW_IN,P,PPFD_IN,PPFD_OUT,PPFD_DIF,
+  dplyr::select(TIMESTAMP_START,TIMESTAMP_END,SW_IN,P,PPFD_IN,PPFD_OUT,PPFD_DIF,
          SWC_1:SWC_7,TA:TA_6,TS_1:TS_8,VPD:VPD_6)%>%
   mutate(Date=ymd_hm(TIMESTAMP_END))%>%
-  select(!ends_with("_SD")&!starts_with("WD_")&!ends_with("_N")&!starts_with("WS_"))
+  dplyr::select(!ends_with("_SD")&!starts_with("WD_")&!ends_with("_N")&!starts_with("WS_"))
 #plotting variables:
 plot_fun<-function(df,var_name){
   # df<-df.Dav
@@ -116,7 +116,7 @@ plot_fun<-function(df,var_name){
 #finalize selecting variables:
 df.Dav.daily<-df.Dav %>%
   #only selected the TS and SWC in the first layer
-  select(Date,SW_IN,P,PPFD_IN:PPFD_DIF,TA,VPD,starts_with("SWC"),starts_with("TS"))
+  dplyr::select(Date,SW_IN,P,PPFD_IN:PPFD_DIF,TA,VPD,starts_with("SWC"),starts_with("TS"))
 df.Dav.daily[df.Dav.daily==-9999]<-NA
 #summarize (mean) for the data:
 df.Dav.daily<-df.Dav.daily%>%
@@ -153,7 +153,7 @@ df.Dav.daily<-df.Dav.daily%>%
 df.Dav.more<-read.csv(paste0(base.path,"Meteo_download/ICOSETC_CH-Dav_METEO_L2/",
                              "ICOSETC_CH-Dav_METEO_L2.csv"))
 df.Dav.snow<-df.Dav.more %>%
-  select(TIMESTAMP_START,TIMESTAMP_END,D_SNOW)%>%
+  dplyr::select(TIMESTAMP_START,TIMESTAMP_END,D_SNOW)%>%
   mutate(TIMESTAMP_START=ymd_hm(TIMESTAMP_START),
          TIMESTAMP_END=ymd_hm(TIMESTAMP_END),
          Date=as.Date(TIMESTAMP_END))

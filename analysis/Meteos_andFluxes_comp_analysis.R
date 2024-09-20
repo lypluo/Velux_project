@@ -9,7 +9,7 @@ library(dplyr)
 #(1)load the data
 #---------
 load.path<-"data/EC_MeteoandFlux/"
-load(paste0(load.path,"df.Meteo.daily.RDA"))
+load(paste0(load.path,"df.Meteo_andFluxes.daily.RDA"))
 
 #tidy the data:
 df.Dav<-df.Meteo.daily$Dav
@@ -26,7 +26,7 @@ SWC.Dav.q95<-quantile(df.Dav$SWC_F_MDS_1,0.95,na.rm = T)
 SWC.Tha.q95<-quantile(df.Tha$SWC_F_MDS_1,0.95,na.rm = T)
 
 df.Dav_sel<-df.Dav %>%
-  select(Date,TA_F:PPFD_DIF,TS_F_MDS_1,SWC_F_MDS_1,D_SNOW,
+  dplyr::select(Date,TA_F:PPFD_DIF,TS_F_MDS_1,SWC_F_MDS_1,D_SNOW,
          TA=TA_F,TA_F=NULL,
          SW_IN=SW_IN_F,SW_IN_F=NULL,
          VPD=VPD_F,VPD_F=NULL,
@@ -46,7 +46,7 @@ df.Dav_sel<-df.Dav %>%
   mutate(sitename="DAV")
 
 df.Tha_sel<-df.Tha%>%
-  select(Date,TA_F:PPFD_DIF,TS_F_MDS_1,SWC_F_MDS_1,D_SNOW,
+  dplyr::select(Date,TA_F:PPFD_DIF,TS_F_MDS_1,SWC_F_MDS_1,D_SNOW,
         TA=TA_F,TA_F=NULL,
         SW_IN=SW_IN_F,SW_IN_F=NULL,
         VPD=VPD_F,VPD_F=NULL,
@@ -85,7 +85,7 @@ plot_fun<-function(df,var,x_f,legend_f){
   #
   df_sel<-df %>%
     filter(Date>=as.Date("2023-01-01")&Date<=as.Date("2023-09-01"))%>%
-    select(Date,var,sitename)
+    dplyr::select(Date,var,sitename)
   names(df_sel)<-c("Date","y","sitename")
   #plotting
   #
@@ -249,7 +249,7 @@ plot_fun_fluxes<-function(df,var,x_f,legend_f){
   #
   df_sel<-df %>%
     filter(Date>=as.Date("2023-01-01")&Date<=as.Date("2023-09-01"))%>%
-    select(Date,var,sitename)
+    dplyr::select(Date,var,sitename)
   names(df_sel)<-c("Date","y","sitename")
   #calculate the rolling mean:
   df_sel<-df_sel %>%

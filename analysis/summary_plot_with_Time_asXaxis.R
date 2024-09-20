@@ -17,7 +17,7 @@ library(cowplot)
 #A.load the meteo data:
 #----------------------
 load.path<-"data/EC_MeteoandFlux/"
-load(paste0(load.path,"df.Meteo.daily.RDA"))
+load(paste0(load.path,"df.Meteo_andFluxes.daily.RDA"))
 
 #tidy the data:
 df.Dav<-df.Meteo.daily$Dav
@@ -27,7 +27,7 @@ names(df.Tha)
 
 #extract the Ta for Davos and Tharandt:
 df.Dav.Meteo<-df.Dav %>%
-  select(Date,TA_F,PPFD_IN,P_F)%>%
+  dplyr::select(Date,TA_F,PPFD_IN,P_F)%>%
   mutate(TA=TA_F,TA_F=NULL,
          P=P_F,P_F=NULL)%>%
   filter(Date %in% as.Date(c("2023-03-08","2023-03-27","2023-04-21",
@@ -35,7 +35,7 @@ df.Dav.Meteo<-df.Dav %>%
   mutate(sitename="DAV",
          CampaignNum=paste0("C",1:6))
 df.Tha.Meteo<-df.Tha %>%
-  select(Date,TA_F,PPFD_IN,P_F)%>%
+  dplyr::select(Date,TA_F,PPFD_IN,P_F)%>%
   mutate(TA=TA_F,TA_F=NULL,
          P=P_F,P_F=NULL)%>%
   filter(Date %in% as.Date(c("2023-03-02","2023-03-22","2023-04-13",
