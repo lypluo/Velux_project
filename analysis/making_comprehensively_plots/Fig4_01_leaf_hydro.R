@@ -69,21 +69,37 @@ df.FvFm_NPQ_qN<-df.NPQ.merge
 #----------------------
 #C.load the pigments
 #----------------------
-load.path<-"./data/"
+load.path<-"data/"
 load(paste0(load.path,"Pigment.data.RDA"))
 df.Pigment<-df.Pigment %>%
-  dplyr::select(sitename,CampaignNum,Position,Cha,Chb,Car,
+  select(sitename,CampaignNum,Position,Cha,Chb,Car,
          CartoCab_ratio)%>%
   mutate(Cab=Cha+Chb)
-
-#--other variables---
+#----------------------
+#D.load the spectral meaurements 
+#----------------------
+load.path<-"data/"
+load(paste0(load.path,"Polypen.data.cleaned.RDA"))
+df.Poly.sepctra<-df.Poly.sel%>%
+  mutate(Date=as.Date(Date))%>%
+  mutate(Position=case_when(c(Position=="L") ~"Lower",
+                            c(Position=="M") ~"Middle",
+                            c(Position=="U") ~"Upper"))
+#----------------------
+#E.load the water potential data:
+#----------------------
+load.path<-"data/"
+load(paste0(load.path,"WaterPotential.data.cleaned.RDA"))
+df.WP<-df.WaterP.sel%>%
+  mutate(Date=as.Date(Date))%>%
+  mutate(Position=case_when(c(Position=="L") ~"Lower",
+                            c(Position=="U") ~"Upper"))
 #----------------------
 #F.load the leaf traits:
 #----------------------
 load.path<-"data/"
 load(paste0(load.path,"Leaf_traits.data.cleaned.RDA"))
 df.traits<-df.traits.sel
-
 #------------------
 #(2)merge the data and change the Position names
 #------------------
@@ -130,7 +146,8 @@ plot_point_fun_meansd<-function(df,var_name,legend.xy){
     ggplot(aes(x=as.factor(substr(Date,6,10)),y=y))+
     geom_point(size=2,shape=4)+
     # geom_line(size=1.2)+
-    stat_summary(aes(x=as.factor(substr(Date,6,10)),y=y,color=sitename),fun.data=mean_sdl, fun.args = list(mult=1),
+    stat_summary(aes(x=as.factor(substr(Date,6,10)),y=y,color=sitename),
+                 fun.data=mean_sdl, fun.args = list(mult=1),
                  geom="pointrange",size=1.8,linewidth=1.2,shape=16)+
     facet_wrap(~Position)+
     scale_color_manual(values = c("DAV"=adjustcolor("red",0.5),
@@ -175,7 +192,7 @@ plot_boxplot_fun<-function(df,var_name,legend.xy,arrow.xy,arrow.flag){
     # stat_summary(aes(x=Date,y=k_sat,col=sitename),fun.data=mean_sdl, fun.args = list(mult=1),
     #              geom="pointrange",size=3,linewidth=4)+
     scale_fill_manual(values = c("DAV"=adjustcolor("red",0.6),
-                                  "THA"=adjustcolor("orange",0.6)))+
+                                 "THA"=adjustcolor("orange",0.6)))+
     # labs(fill = "Sitename")+
     xlab("2023")+
     ##separate the campaigns-adding in Jan, 2024
@@ -205,148 +222,61 @@ plot_boxplot_fun<-function(df,var_name,legend.xy,arrow.xy,arrow.flag){
   return(p_var_Date)
 }
 
+
 ##-------------
 #LIcor data
 ##-------------
 library(ggforce) #-->draw circle in the plot
 
-#Fv/Fm,NPQ,qN:
-#filter the data when NPQ=0...
-df.merge_FvFm_NPQ_qN<-df.merge_FvFm_NPQ_qN %>%
-  filter(Fv.Fm>0 & NPQ >0)
-p_Fv.Fm_Date<-plot_boxplot_fun(df.merge_FvFm_NPQ_qN,"Fv.Fm",
-                               c(0.1,0.9),
-                               data.frame(x=4,xend=4,y=0.8,yend=0.65),
-                               TRUE)+
+# Gs and E:
+p_Gs_Date<-plot_point_fun_meansd(df.merge_Gs_E,"Gs",c(0.12,0.9))+
   labs(
     x="",
     # x = expression("Irradiance (" * mu * mol ~ m^{-2} ~ s^{-1} * ")"),
-    y = expression("Fv/Fm")
+    y = expression(G[s] ~ "(" * mol ~ m^{-2} ~ s^{-1} * ")")
   )+
-  theme(legend.position = c(0.4,0.3),
-        legend.background = element_rect(),
-        axis.text.x = element_blank(),
-        # plot.margin = margin(0,5,0,5),
-        panel.spacing = unit(0.05, "lines"))
-# p_PhiPS2_Date<-plot_boxplot_fun(df.merge_FvFm_NPQ_qN,
-#                                 "PhiPS2",c(0.8,0.2))+
-#   labs(
-#     x="",
-#     y = (expression(phi[PSII]))
-#   )+
-#   theme(legend.position = "none",
-#         axis.text.x = element_blank()
-#         )
-p_NPQ_Date<-plot_boxplot_fun(df.merge_FvFm_NPQ_qN,
-                             "NPQ",c(0.1,0.9),
-                             data.frame(x=4,xend=4,y=2,yend=1.5),
-                             TRUE)+
-  labs(
-    x="",
-    y = expression("NPQ")
-  )+
-  theme(legend.position = "none",
-    axis.text.x = element_blank(),
-    plot.margin = margin(-10,5,0,5),
-    panel.spacing = unit(0.1, "lines"))
-p_qNtoqP_Date<-plot_boxplot_fun(df.merge_FvFm_NPQ_qN,
-                                "qN.qP",c(0.8,0.2),
-                                data.frame(x=4,xend=4,y=9,yend=7.5),
-                                TRUE)+
-  labs(
-    x="",
-    y = expression("qN/qP")
-  )+ylim(0,9)+
-  theme(legend.position = "none",
-        plot.margin = margin(0,5,0,5),
-        panel.spacing = unit(0.1, "lines"))
-
-
-#merge the plots:
-# plot_grid(p_Fv.Fm_Date,p_NPQ_Date,p_qNtoqP_Date,
-#           ncol = 1,align = "v",labels = c("(a)","(b)","(c)"))
-
-##-------------
-#Pigments data
-##-------------
-#adding pigments ratios
-df.merge_Pigments<-df.merge_Pigments %>%
-  mutate(ChatoChb=Cha/Chb)
-# Car/Cab
-p_CartoCab_Date<-plot_point_fun_meansd(df.merge_Pigments,"CartoCab_ratio",c(0.1,0.9))+
+  theme(legend.background = element_rect())
+p_E_Date<-plot_point_fun_meansd(df.merge_Gs_E,"E",c(0.05,0.9))+
   labs(
     x="",
     # x = expression("Irradiance (" * mu * mol ~ m^{-2} ~ s^{-1} * ")"),
-    y = expression("Car/Cab")
-  )+
-  theme(axis.text.x = element_blank(),
-        axis.title.x = element_blank(),
-        legend.position = c(0.37,0.8),
-        legend.background = element_rect(),
-        plot.margin = margin(0,5,0,5),
-        panel.spacing.y = unit(0.05, "lines"))
-
-#addtional plots:
-#theorotically, if ratio of Cha/Chb high-->higher light photoprotection according to Liyao
-#but the results did not reflect this 
-p_ChatoChb_Date<-plot_point_fun_meansd(df.merge_Pigments,"Car",c(0.9,0.9))+
+    y = expression("T (mol" ~ m^{-2} ~ s^{-1} * ")")
+  )
+#additionally:
+p_gws_Date<-plot_point_fun_meansd(df.merge_Gs_E,"gsw",c(0.1,0.9))+
   labs(
     x="",
     # x = expression("Irradiance (" * mu * mol ~ m^{-2} ~ s^{-1} * ")"),
-    y = expression("Chla/Chb")
+    y = expression(gsw ~ "(" * mol ~ m^{-2} ~ s^{-1} * ")")
   )+
-  theme(axis.text.x = element_blank(),
-        axis.title.x = element_blank(),
-        legend.position = c(0.35,0.8),
-        legend.background = element_rect(),
-        plot.margin = margin(0,5,0,5))
+  theme(legend.position = "none")
 
 ##-------------
-#leaf traits
+#leaf water potential
 ##-------------
-p_SLA_Date<-plot_boxplot_fun(df.merge_traits,
-                             "SLA",c(0.9,0.9),
-                             data.frame(x=4,xend=4,y=0,yend=0),
-                             FALSE
-                             )+
+#small twig
+p_WP_twig_Date<-plot_point_fun_meansd(df.WP,"WP_Twig",c(0.36,0.2))+
   labs(
     x="2023",
     # x = expression("Irradiance (" * mu * mol ~ m^{-2} ~ s^{-1} * ")"),
-    y = expression(SLA*" (cm"^2*g^-1*")")
+    y = expression(psi[twig]*" (bar)")
   )+
-  theme(legend.position = "none",
-        plot.margin = margin(0,5,0,5))
-# p_LMA_Date<-plot_point_fun_meansd(df.merge_traits,"LMA",c(0.9,0.9))+
-#   labs(
-#     x="2023",
-#     # x = expression("Irradiance (" * mu * mol ~ m^{-2} ~ s^{-1} * ")"),
-#     y = expression(LMA*" (g"*"cm"^-2*")")
-#   )
-p_width_Date<-plot_boxplot_fun(df.merge_traits,
-                               "ImageJ_average_width",c(0.9,0.9),
-                               data.frame(x=4,xend=4,y=0,yend=0),
-                               FALSE)+
+  theme(legend.position = "none")
+#big branch
+p_WP_branch_Date<-plot_point_fun_meansd(df.WP,"WP_Branch",c(0.36,0.2))+
   labs(
     x="2023",
     # x = expression("Irradiance (" * mu * mol ~ m^{-2} ~ s^{-1} * ")"),
-    y = expression("Width"[needle]*" (cm"*")")
-  )+
-  theme(legend.position = "none",
-        plot.margin = margin(0,5,0,5),
-        panel.spacing = unit(0.05, "lines"))
+    y = expression(psi[branch]*" (bar)")
+  )
 
 
-###Merge plots:
-p_leaf_physio<-plot_grid(p_Fv.Fm_Date,p_NPQ_Date,p_qNtoqP_Date,
-                         p_CartoCab_Date,p_width_Date,
-                ncol = 1,align = "hv",
-                labels = c("(a)","(b)","(c)","(d)","(e)"),
-                rel_heights = c(0.19,0.19,0.19,0.22,0.2))+
-  theme(plot.margin = margin(0,0,0,0),
-    panel.spacing = unit(0,"lines"))
-# ggsave(paste0(save.path,"Fig2_temp.png"),p_leaf_physio,width = 12,height=15)
+#!merge the Gs, and,leaf water potential
+p_leaf_hydro<-plot_grid(p_Gs_Date,p_WP_twig_Date,ncol=1,
+                         align = "v",labels = c("(a)","(b)"))
+# ggsave(p_hydro_merge,filename = paste("./manuscript/Summary_Vars_with_Time/P_hydro_merge.png"),
+#        width = 10,height = 8)
 ##save the ggplot plots:
-save.path<-"./data/Comprehensive_plot_data/Fig2/"
-save(p_leaf_physio,file=paste0(save.path,"p_leaf_physio.RDA"))
-
+save.path<-"./data/Comprehensive_plot_data/Fig4/"
+save(p_leaf_hydro,file=paste0(save.path,"p_leaf_hydro.RDA"))
 

@@ -222,13 +222,21 @@ plot_fun_fluxes_mean<-function(df,sitename,flux_name,legend_flag){
   #add lines:
   if(sitename=="DE-Tha"){
     p_plot<-p_plot+
+      #for averaged years
       geom_segment(aes(x=45,y=0,xend = 45,yend = -Inf),size=1.1,
-         color = "black",lty=2)
+         color = "black",lty=2)+
+      #for year 2023:
+      geom_segment(aes(x=38,y=0,xend = 38,yend = -Inf),size=1.1,
+                   color = "red",lty=2)
   }
   if(sitename=="CH-Dav"){
     p_plot<-p_plot+
+      #for averaged years
       geom_segment(aes(x=78,y=0,xend = 78,yend = -Inf),size=1.1,
-                   color = "black",lty=2)
+                   color = "black",lty=2)+
+      #for year 2023:
+      geom_segment(aes(x=67,y=0,xend = 67,yend = -Inf),size=1.1,
+                   color = "red",lty=2)
   }
   
   #

@@ -293,6 +293,8 @@ ggsave(p_Amax,filename = paste("./manuscript/Amax_var_campaigns.png"),
 df.physio<-df.Amax.merge %>%
   #Gs:stomatal conductance-->refer to Tang et al., 2022:
   #https://nph.onlinelibrary.wiley.com/doi/full/10.1111/nph.18649
+  #E:unit-->mol m-2 s-1; VPDleaf:kPa; Pa:air presssure-->kPa
+  #Gs: mol m-2 s-1
   mutate(Gs=E*VPDleaf/Pa)%>%
   select(sitename,ID,CampaignNum,Position,A,Gs,E,gsw,gtc)%>%
   filter(Gs>0 & E>0)

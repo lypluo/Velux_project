@@ -179,7 +179,8 @@ df_add_2<-left_join(df_plot,df_pheno)%>%
   #only keep the data between [sos10-60,sos10_60]
   filter(DoY>sos10 & DoY<=sos10+60)%>%
   mutate(period="post-sos")
-df_add<-rbind(df_add_1,df_add_2)
+df_add<-rbind(df_add_1,df_add_2)%>%
+  mutate(period=factor(period,levels=c("pre-sos","post-sos")))
 #
 df_add_Dav<-df_add[df_add$sitename=="CH-Dav",]
 df_add_Tha<-df_add[df_add$sitename=="DE-Tha",]
