@@ -97,7 +97,7 @@ rect.coord_isevent=data.frame(
 #function:
 plot_fun<-function(df,var,x_f,legend_f,df_rect){
   # df<-df.all
-  # var<-"VPD"
+  # var<-"SWC_1"
   # x_f=FALSE
   # legend_f=FALSE
   # df_rect=rect.coord_isevent
@@ -111,15 +111,19 @@ plot_fun<-function(df,var,x_f,legend_f,df_rect){
   df_sel<-df_sel %>%
     group_by(sitename)%>%
     mutate(y_15=zoo::rollmean(y,k=15,fill="extend"))
+  #change the sitename-->shorten:
+  df_sel<-df_sel%>%
+    mutate(sitename=case_when(sitename=="DE-Tha"~"Tha",
+                              sitename=="CH-Dav"~"Dav"))
   
   #plotting
   #
   df_sel_Tha_Samp<-df_sel %>%
-    filter(sitename=="DE-Tha")%>%
+    filter(sitename=="Tha")%>%
     filter(Date %in% as.Date(c("2023-03-02","2023-03-22","2023-04-13",
                                "2023-04-28","2023-05-17","2023-07-14")))
   df_sel_Dav_Samp<-df_sel %>%
-    filter(sitename=="CH-Dav")%>%
+    filter(sitename=="Dav")%>%
     filter(Date %in% as.Date(c("2023-03-08","2023-03-27","2023-04-21",
                                "2023-05-03","2023-05-22","2023-07-17")))
 
@@ -135,11 +139,11 @@ plot_fun<-function(df,var,x_f,legend_f,df_rect){
               mapping=aes(xmin=x2, xmax=x3, ymin=y1, ymax=y2), 
               fill="blue",alpha=0.2)+
     geom_point(aes(Date,y),data=df_sel_Tha_Samp,col="orange",size=5)+
-    geom_line(aes(Date,y_15),data=df_sel[df_sel$sitename=="DE-Tha",],col="orange",size=1.2)+
+    geom_line(aes(Date,y_15),data=df_sel[df_sel$sitename=="Tha",],col="orange",size=1.2)+
     geom_point(aes(Date,y),data=df_sel_Dav_Samp,col="brown1",size=5)+
-    geom_line(aes(Date,y_15),data=df_sel[df_sel$sitename=="CH-Dav",],col="brown1",size=1.2)+
-    scale_color_manual(values = c("CH-Dav"=adjustcolor("brown1",0.2),
-                       "DE-Tha"=adjustcolor("orange",0.2)))+
+    geom_line(aes(Date,y_15),data=df_sel[df_sel$sitename=="Dav",],col="brown1",size=1.2)+
+    scale_color_manual(values = c("Dav"=adjustcolor("brown1",0.2),
+                       "Tha"=adjustcolor("orange",0.2)))+
     theme_light()+
     theme(legend.position = c(0.85,0.9),
           legend.text = element_text(size = 20),
@@ -231,7 +235,7 @@ p_SWC_norm<-plot_fun(df.all,"SWC_Norm",TRUE,FALSE,rect.coord_isevent)
 p_VPD<-plot_fun(df.all,"VPD",TRUE,FALSE,rect.coord_isevent)
 #merge the plots:
 p_samplingYear_VPD_SWC<-plot_grid(p_SWC,p_SWC_norm,p_VPD,nrow = 1,
-                                  labels = c("(c)","(d)","(f)"))
+                                  labels = c("(c)","(d)","(e)"))
 ###save the ggplot plots:
 save.path<-"./data/Comprehensive_plot_data/Fig4/"
 save(p_samplingYear_VPD_SWC,file=paste0(save.path,"p_samplingYear_VPD_SWC.RDA"))

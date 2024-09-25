@@ -134,10 +134,17 @@ df.merge_traits<-df.merge_traits %>%
 #(3)plotting
 #------------------
 #addding mean and sd
-plot_point_fun_meansd<-function(df,var_name,legend.xy){
-  # df<-df.merge_Pigments
-  # var_name<-"CartoCab_ratio"
+
+#also adding arrows in C2:
+
+
+# plot_point_fun_meansd(df.merge_Gs_E,"Gs",c(0.05,0.85))
+plot_point_fun_meansd<-function(df,var_name,legend.xy,arrow.xy,arrow.flag){
+  # df<-df.merge_Gs_E
+  # var_name<-"Gs"
   # legend.xy<-c(0.1,0.9)
+  # arrow.xy<-data.frame(x=4,xend=4,y=3e-05,yend=1.5e-05)
+  # arrow.flag<-TRUE
   
   df$y<-as.numeric(unlist(df[,var_name]))
   p_var_Date<-df%>%
@@ -170,6 +177,19 @@ plot_point_fun_meansd<-function(df,var_name,legend.xy){
           legend.background = element_blank()
     )
   #
+  if(arrow.flag==TRUE){
+    p_var_Date<-p_var_Date+
+      #adding the flag to indicate cold events in Davos
+      geom_segment(
+        aes(x = arrow.xy$x, y = arrow.xy$y,
+            xend = arrow.xy$xend, yend = arrow.xy$yend),
+        arrow = arrow(type = "closed", 
+                      length = unit(0.2, "inches")),
+        color = "blue", size = 0.8)
+  }
+  
+  
+  
   return(p_var_Date)
 }
 
@@ -229,21 +249,28 @@ plot_boxplot_fun<-function(df,var_name,legend.xy,arrow.xy,arrow.flag){
 library(ggforce) #-->draw circle in the plot
 
 # Gs and E:
-p_Gs_Date<-plot_point_fun_meansd(df.merge_Gs_E,"Gs",c(0.12,0.9))+
+p_Gs_Date<-plot_point_fun_meansd(df.merge_Gs_E,"Gs",
+                                 c(0.05,0.85),
+                                 data.frame(x=4,xend=4,y=3e-05,yend=1.5e-05),
+                                 TRUE)+
   labs(
     x="",
     # x = expression("Irradiance (" * mu * mol ~ m^{-2} ~ s^{-1} * ")"),
     y = expression(G[s] ~ "(" * mol ~ m^{-2} ~ s^{-1} * ")")
   )+
   theme(legend.background = element_rect())
-p_E_Date<-plot_point_fun_meansd(df.merge_Gs_E,"E",c(0.05,0.9))+
+p_E_Date<-plot_point_fun_meansd(df.merge_Gs_E,"E",c(0.05,0.9),
+                                data.frame(x=4,xend=4,y=3e-05,yend=1.5e-05),
+                                FALSE)+
   labs(
     x="",
     # x = expression("Irradiance (" * mu * mol ~ m^{-2} ~ s^{-1} * ")"),
     y = expression("T (mol" ~ m^{-2} ~ s^{-1} * ")")
   )
 #additionally:
-p_gws_Date<-plot_point_fun_meansd(df.merge_Gs_E,"gsw",c(0.1,0.9))+
+p_gws_Date<-plot_point_fun_meansd(df.merge_Gs_E,"gsw",c(0.1,0.9),
+                                  data.frame(x=4,xend=4,y=3e-05,yend=1.5e-05),
+                                  FALSE)+
   labs(
     x="",
     # x = expression("Irradiance (" * mu * mol ~ m^{-2} ~ s^{-1} * ")"),
@@ -255,7 +282,9 @@ p_gws_Date<-plot_point_fun_meansd(df.merge_Gs_E,"gsw",c(0.1,0.9))+
 #leaf water potential
 ##-------------
 #small twig
-p_WP_twig_Date<-plot_point_fun_meansd(df.WP,"WP_Twig",c(0.36,0.2))+
+p_WP_twig_Date<-plot_point_fun_meansd(df.WP,"WP_Twig",c(0.36,0.2),
+               data.frame(x=4,xend=4,y=-20,yend=-30),
+                                      TRUE)+
   labs(
     x="2023",
     # x = expression("Irradiance (" * mu * mol ~ m^{-2} ~ s^{-1} * ")"),
@@ -263,7 +292,9 @@ p_WP_twig_Date<-plot_point_fun_meansd(df.WP,"WP_Twig",c(0.36,0.2))+
   )+
   theme(legend.position = "none")
 #big branch
-p_WP_branch_Date<-plot_point_fun_meansd(df.WP,"WP_Branch",c(0.36,0.2))+
+p_WP_branch_Date<-plot_point_fun_meansd(df.WP,"WP_Branch",c(0.36,0.2),
+                 data.frame(x=4,xend=4,y=-20,yend=-30),
+                                        TRUE)+
   labs(
     x="2023",
     # x = expression("Irradiance (" * mu * mol ~ m^{-2} ~ s^{-1} * ")"),
