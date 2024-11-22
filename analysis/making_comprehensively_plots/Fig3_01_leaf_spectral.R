@@ -144,7 +144,7 @@ p_NDVI_Date<-plot_point_fun_meansd(df.Poly.sepctra,"NDVI",c(0.1,0.1),
   labs(
     x="",
     # x = expression("Irradiance (" * mu * mol ~ m^{-2} ~ s^{-1} * ")"),
-    y = expression("NDVI")
+    y = expression("NDVI"[Needle])
   )+
   theme(legend.position =c(0.3,0.35))
 #2) PRI
@@ -154,7 +154,7 @@ p_PRI_Date<-plot_point_fun_meansd(df.Poly.sepctra,"PRI",c(0.1,0.1),
   labs(
     x="",
     # x = expression("Irradiance (" * mu * mol ~ m^{-2} ~ s^{-1} * ")"),
-    y = expression("PRI")
+    y = expression("PRI"[Needle])
   )+
   theme(legend.position = c(0.3,0.35))
 

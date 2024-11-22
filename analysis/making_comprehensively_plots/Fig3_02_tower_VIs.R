@@ -143,11 +143,12 @@ plot_fun<-function(df,var_name){
 }
 ##
 p_NDVI<-plot_fun(df.all,"NDVI")+
-  xlab("2023")
+  xlab("2023")+
+  ylab(expression("NDVI"[Crown]))
 # plot_fun(df.all,"PRI") # the absolute PRI in two sites are different-->hence
 # normalize it
 p_PRI<-plot_fun(df.all,"PRI_norm")+
-  ylab("Norm PRI")+
+  ylab(expression("Norm PRI"[Crown]))+
   ylim(0,1.2)+
   # theme(legend.position = "none")+
   xlab("2023")
@@ -167,6 +168,21 @@ p_crown_NDVI<-p_NDVI
 p_crown_PRI<-p_PRI
 # plot_grid(p_PRI,nrow=1,
 #                         labels = c("(b)"))
+##adding the lines to indicate the field sampling dates:
+Date.Dav<-as.Date(c("2023-03-08","2023-03-27","2023-04-21",
+          "2023-05-03","2023-05-22","2023-07-17"))
+Date.Tha<-as.Date(c("2023-03-02","2023-03-22","2023-04-13",
+          "2023-04-28","2023-05-17","2023-07-14"))
+#
+p_crown_PRI<-p_crown_PRI+
+  geom_vline(xintercept = as.POSIXct(Date.Dav),col="red",lty=2)+
+  geom_vline(xintercept = as.POSIXct(Date.Tha),col="orange",lty=2)
+
+p_crown_NDVI<-p_crown_NDVI+
+  geom_vline(xintercept = as.POSIXct(Date.Dav),col="red",lty=2)+
+  geom_vline(xintercept = as.POSIXct(Date.Tha),col="orange",lty=2)
+
+
 #save the plot
 save.path<-"./data/Comprehensive_plot_data/Fig3/"
 save(p_crown_NDVI,file=paste0(save.path,"p_crown_NDVI.RDA"))
