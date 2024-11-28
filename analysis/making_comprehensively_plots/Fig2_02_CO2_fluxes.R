@@ -91,7 +91,7 @@ df<-df %>%
 ##---------
 #GPP 
 ##---------
-plot_fun_GPP_mean<-function(df,sitename){
+plot_fun_GPP_mean<-function(df,sitename,legend_flag){
   # df<-df
   # sitename<-"CH-Dav"
   
@@ -130,6 +130,7 @@ plot_fun_GPP_mean<-function(df,sitename){
     annotate(geom = "segment",x=180,xend=190,y = 1,yend = 1,col="black",size=1.5)+
     annotate(geom = "text",x=220,y=c(2,1),label=c("2023","Mean"),size=5)+
     ylab(expression("GPP ("*mu*"mol m"^-2*"s"^-1*")"))+
+    xlab("DOY")+
     labs(color ="Year")+
     theme(axis.title = element_text(size=20),
           axis.text = element_text(size = 16),
@@ -137,13 +138,40 @@ plot_fun_GPP_mean<-function(df,sitename){
           legend.background = "none"
     )+
     theme_light()
+  
+  #add lines:
+  if(sitename=="DE-Tha"){
+    p_plot<-p_plot+
+      #for averaged years
+      geom_segment(aes(x=45,y=0,xend = 45,yend = -Inf),size=1.1,
+                   color = "black",lty=2)+
+      #for year 2023:
+      geom_segment(aes(x=38,y=0,xend = 38,yend = -Inf),size=1.1,
+                   color = "red",lty=2)
+  }
+  if(sitename=="CH-Dav"){
+    p_plot<-p_plot+
+      #for averaged years
+      geom_segment(aes(x=78,y=0,xend = 78,yend = -Inf),size=1.1,
+                   color = "black",lty=2)+
+      #for year 2023:
+      geom_segment(aes(x=67,y=0,xend = 67,yend = -Inf),size=1.1,
+                   color = "red",lty=2)
+  }
+  
+  #
+  if(legend_flag==FALSE){
+    p_plot<-p_plot+
+      theme(legend.position = "none")
+  }
 
   #
   return(p_plot)
   
 }
 #
-plot_Dav<-plot_fun_GPP_mean(df,"CH-Dav")
+plot_Dav<-plot_fun_GPP_mean(df,"CH-Dav")+
+  xlab("")
 plot_Tha<-plot_fun_GPP_mean(df,"DE-Tha")
 #
 plot_grid(plot_Tha,plot_Dav,align = "h",labels = c("A","B"),nrow=1)
@@ -195,6 +223,7 @@ plot_fun_fluxes_mean<-function(df,sitename,flux_name,legend_flag){
     stat_smooth(aes(x=DoY,y=y),data=df.use[df.use$Year==2023,],
                 col="red",se=FALSE,size=2)+
     xlim(0,250)+
+    xlab("DOY")+
     labs(color ="Year")+
     theme(axis.title = element_text(size=20),
           axis.text = element_text(size = 16),
@@ -250,7 +279,8 @@ plot_fun_fluxes_mean<-function(df,sitename,flux_name,legend_flag){
 #$######
 #NEE
 #$######
-plot_Dav_NEE<-plot_fun_fluxes_mean(df,"CH-Dav","NEE",TRUE)
+plot_Dav_NEE<-plot_fun_fluxes_mean(df,"CH-Dav","NEE",TRUE)+
+  xlab("")
 plot_Tha_NEE<-plot_fun_fluxes_mean(df,"DE-Tha","NEE",FALSE)
 #
 p_Eco_NEE<-plot_grid(plot_Dav_NEE,plot_Tha_NEE,align = "h",

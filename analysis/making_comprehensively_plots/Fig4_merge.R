@@ -21,12 +21,12 @@ load(paste0(load.path,"p_Eco_ET_Gs.RDA"))
 #
 p_merge1<-plot_grid(p_leaf_hydro,p_samplingYear_VPD_SWC,
                    align="hv",
-                   ncol=1,rel_widths = c(0.8,0.2))
+                   ncol=1,rel_widths = c(0.88,0.12))
 p_merge2<-plot_grid(p_merge1,
                     p_Eco_ET_Gs,
                     align="hv",
-                    ncol=2,rel_widths = c(0.55,0.45))
+                    ncol=2,rel_widths = c(0.6,0.4))
 ##save the plot:
 save.path<-"./manuscript/comprehensive_plot/"
-ggsave(paste0(save.path,"Fig4.png"),p_merge2,width = 32,height=16)
+ggsave(paste0(save.path,"Fig4.png"),p_merge2,width = 33,height=16)
 

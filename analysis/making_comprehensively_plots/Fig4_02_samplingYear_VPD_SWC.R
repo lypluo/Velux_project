@@ -156,7 +156,7 @@ plot_fun<-function(df,var,x_f,legend_f,df_rect){
   #SWC_1
   if(var=="SWC_1"){
     df_plot<-df_plot+
-      ylab(expression("SWC (%)"))+
+      ylab(expression("SWC"[shallow]*" (%)"))+
       annotate(geom="text",x=df_sel_Tha_Samp$Date,y=df_sel_Tha_Samp$y+1,
                label=paste0("C",1:6),col="orange",size=5)+
       annotate(geom="text",x=df_sel_Dav_Samp$Date,y=df_sel_Dav_Samp$y-1,
@@ -178,7 +178,7 @@ plot_fun<-function(df,var,x_f,legend_f,df_rect){
   #SWC_Norm:
   if(var=="SWC_Norm"){
     df_plot<-df_plot+
-      ylab(expression("Norm_SWC"))+
+      ylab(expression("Norm_SWC"[shallow]))+
       annotate(geom="text",x=df_sel_Tha_Samp$Date,y=df_sel_Tha_Samp$y+0.1,
                label=paste0("C",1:6),col="orange",size=5)+
       annotate(geom="text",x=df_sel_Dav_Samp$Date,y=df_sel_Dav_Samp$y-0.1,

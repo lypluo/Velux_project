@@ -118,10 +118,12 @@ df.merge_traits<-df.merge_traits %>%
 #(3)plotting
 #------------------
 #addding mean and sd
-plot_point_fun_meansd<-function(df,var_name,legend.xy){
+plot_point_fun_meansd<-function(df,var_name,legend.xy,arrow.xy,arrow.flag){
   # df<-df.merge_Pigments
   # var_name<-"CartoCab_ratio"
   # legend.xy<-c(0.1,0.9)
+  # arrow.xy<-data.frame(x=4,xend=4,y=0.8,yend=0.65)
+  # arrow.flag<-FALSE
   
   df$y<-as.numeric(unlist(df[,var_name]))
   p_var_Date<-df%>%
@@ -152,6 +154,16 @@ plot_point_fun_meansd<-function(df,var_name,legend.xy){
           legend.position = legend.xy,
           legend.background = element_blank()
     )
+  if(arrow.flag==TRUE){
+    p_var_Date<-p_var_Date+
+      #adding the flag to indicate cold events in Davos
+      geom_segment(
+        aes(x = arrow.xy$x, y = arrow.xy$y,
+            xend = arrow.xy$xend, yend = arrow.xy$yend),
+        arrow = arrow(type = "closed", 
+                      length = unit(0.2, "inches")),
+        color = "blue", size = 0.8)
+  }
   #
   return(p_var_Date)
 }
@@ -273,7 +285,10 @@ p_qNtoqP_Date<-plot_boxplot_fun(df.merge_FvFm_NPQ_qN,
 df.merge_Pigments<-df.merge_Pigments %>%
   mutate(ChatoChb=Cha/Chb)
 # Car/Cab
-p_CartoCab_Date<-plot_point_fun_meansd(df.merge_Pigments,"CartoCab_ratio",c(0.1,0.9))+
+p_CartoCab_Date<-plot_point_fun_meansd(df.merge_Pigments,"CartoCab_ratio",
+                                       c(0.1,0.9),
+                                       data.frame(x=4,xend=4,y=0.8,yend=0.65),
+                                       TRUE)+
   labs(
     x="",
     # x = expression("Irradiance (" * mu * mol ~ m^{-2} ~ s^{-1} * ")"),
@@ -289,7 +304,9 @@ p_CartoCab_Date<-plot_point_fun_meansd(df.merge_Pigments,"CartoCab_ratio",c(0.1,
 #addtional plots:
 #theorotically, if ratio of Cha/Chb high-->higher light photoprotection according to Liyao
 #but the results did not reflect this 
-p_ChatoChb_Date<-plot_point_fun_meansd(df.merge_Pigments,"Car",c(0.9,0.9))+
+p_ChatoChb_Date<-plot_point_fun_meansd(df.merge_Pigments,"Car",c(0.9,0.9),
+                                       data.frame(x=4,xend=4,y=0.55,yend=0.45),
+                                       TRUE)+
   labs(
     x="",
     # x = expression("Irradiance (" * mu * mol ~ m^{-2} ~ s^{-1} * ")"),
@@ -333,8 +350,13 @@ p_width_Date<-plot_boxplot_fun(df.merge_traits,
   )+
   theme(legend.position = "none",
         plot.margin = margin(0,5,0,5),
-        panel.spacing = unit(0.05, "lines"))
-
+        panel.spacing = unit(0.05, "lines"))+
+  annotate(geom = "text",x=c(1.5),y=rep(0.055),label=c("C1"),size=6)+
+  annotate(geom = "text",x=c(3.5),y=rep(0.055),label=c("C2"),size=6)+
+  annotate(geom = "text",x=c(5.5),y=rep(0.055),label=c("C3"),size=6)+
+  annotate(geom = "text",x=c(7.5),y=rep(0.055),label=c("C4"),size=6)+
+  annotate(geom = "text",x=c(9.5),y=rep(0.055),label=c("C5"),size=6)+
+  annotate(geom = "text",x=c(11.5),y=rep(0.055),label=c("C6"),size=6)
 
 ###Merge plots:
 p_leaf_physio<-plot_grid(p_Fv.Fm_Date,p_NPQ_Date,p_qNtoqP_Date,

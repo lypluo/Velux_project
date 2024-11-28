@@ -139,6 +139,7 @@ plot_fun_fluxes_mean<-function(df,sitename,flux_name,legend_flag){
     stat_smooth(aes(x=DoY,y=y_mean),data=df.use.mean,col=adjustcolor("black",0.8),size=2)+
     stat_smooth(aes(x=DoY,y=y),data=df.use[df.use$Year==2023,],
                 col="red",se=FALSE,size=2)+
+    xlab("DOY")+
     xlim(0,242)+
         theme(axis.title = element_text(size=24),
           axis.text = element_text(size = 22),
@@ -223,16 +224,19 @@ plot_fun_fluxes_mean<-function(df,sitename,flux_name,legend_flag){
 #ET
 #$######
 plot_Dav_ET<-plot_fun_fluxes_mean(df,"CH-Dav","ET",TRUE)+
+  xlab("")+
   theme(axis.title.x = element_blank())
 plot_Tha_ET<-plot_fun_fluxes_mean(df,"DE-Tha","ET",FALSE)+
-  theme(axis.title.x = element_blank())
+  # theme(axis.title.x = element_blank())+
+  xlab("DOY")
 #
 plot_grid(plot_Dav_ET,plot_Tha_ET,align = "h",nrow=1)
 
 #$######
 #Gs
 #$######
-plot_Dav_Gs<-plot_fun_fluxes_mean(df,"CH-Dav","Gs_mol",FALSE)
+plot_Dav_Gs<-plot_fun_fluxes_mean(df,"CH-Dav","Gs_mol",FALSE)+
+  xlab("")
 plot_Tha_Gs<-plot_fun_fluxes_mean(df,"DE-Tha","Gs_mol",FALSE)
 #
 plot_grid(plot_Dav_Gs,plot_Tha_Gs,align = "h",labels = c("(a)","(b)"),nrow=1)

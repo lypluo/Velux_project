@@ -105,6 +105,10 @@ p_Crown_PRI<-plot_function(load.path,"PRI","Crown")
 #-------------------
 #(3) start to make the plots for the mauscript
 #-------------------
+
+#----------------
+#For PRI
+#----------------
 ##Plot-A: merge Landscape+Crown PRI(Campaign 5 as an example)
 p_PRI_C5_Landscape<-p_Landscape_PRI$C5_PRI_Landscape+
   scale_fill_gradientn(colors = c(
@@ -131,6 +135,34 @@ p_merge_image_PRI<-p_PRI_C5_Landscape +
 # p_merge_image_PRI<-plot_grid(p_merge_image_PRI,
 #                 labels = c("(c)"),label_x = 0,label_y=1,
 #                          nrow=1)
+
+#----------------
+#For NDVI
+#----------------
+#For Plot-A:merge Landscape+Crown NDVI(Campaign 5 as an example)
+p_NDVI_C5_Landscape<-p_Landscape_NDVI$C5_NDVI_Landscape+
+  scale_fill_gradientn(colors = c(
+    "#440154","#482878","#3E4B8B","#31688E","#26828E",
+    "#1F9B77","#5CDB5A","#B8DE29", "#FDE725"),
+    limits=c(0,1))+
+  annotate(geom = "text",x=2784385,y=1187640,label="C5",size=10)+
+  theme(axis.title = element_blank())
+p_NDVI_C5_Crown<-p_Crown_NDVI$C5_NDVI_Crown+
+  # theme(legend.position = c(0.86,0.3))+
+  scale_fill_gradientn(colors = c(
+    "#440154","#482878","#3E4B8B","#31688E","#26828E",
+    "#1F9B77","#5CDB5A","#B8DE29", "#FDE725"),
+    limits=c(0,1))+
+  theme_light()+
+  theme(legend.position = "none",
+        axis.title = element_blank(),
+        axis.ticks = element_blank(),
+        axis.text = element_blank())
+#insert crown plot into landscape as insert plot
+p_merge_image_NDVI<-p_NDVI_C5_Landscape +
+  inset_element(p_NDVI_C5_Crown,left = 0.72,right =0.99,
+                bottom = 0.72,top=0.99)
+
 ##Plot-B: the data distribution of VI from C1-C6:
 plot_boxplot<-function(tiff.path,VI_name,VI_scale){
   # tiff.path<-load.path
@@ -214,6 +246,7 @@ p_crown_PRI_boxplot<-plot_boxplot(load.path,"PRI","Crown")+
 #-------------------
 #merge the plot
 #-------------------
+#---PRI-----
 #put the crown PRI as an insert plot
 p_crown_PRI_boxplot<-p_crown_PRI_boxplot+
   theme(axis.title.x = element_blank(),
@@ -222,10 +255,24 @@ p_crown_PRI_boxplot<-p_crown_PRI_boxplot+
 p_PRI_boxplot<-plot_grid(p_crown_PRI_boxplot,p_Landscape_PRI_boxplot,
           # labels = c("(d)","(e)"),
           nrow=2)
+#---NDVI-----
+#put the crown PRI as an insert plot
+p_crown_NDVI_boxplot<-p_crown_NDVI_boxplot+
+  theme(axis.title.x = element_blank(),
+        axis.text.x = element_blank())
+
+p_NDVI_boxplot<-plot_grid(p_crown_NDVI_boxplot,p_Landscape_NDVI_boxplot,
+                         # labels = c("(d)","(e)"),
+                         nrow=2)
 
 #-------------------
 #(4) save the plots
 #-------------------
 save.path<-"D:/data/Velux_shared_data/CH-Dav/HighSpec/Github_data/"
+#PRI
 save(p_merge_image_PRI,file=paste0(save.path,"p_Drones_PRI_image.RDA"))
 save(p_PRI_boxplot,file=paste0(save.path,"p_Drones_PRI_boxplot.RDA"))
+#NDVI
+save(p_merge_image_NDVI,file=paste0(save.path,"p_Drones_NDVI_image.RDA"))
+save(p_NDVI_boxplot,file=paste0(save.path,"p_Drones_NDVI_boxplot.RDA"))
+
