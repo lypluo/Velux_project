@@ -76,8 +76,8 @@ df.all<-left_join(df.all,df.filter_max)
 #(2)plotting
 #----------
 plot_fun<-function(df,var_name){
-  # df<-df.all
-  # var_name<-"NDVI"
+  df<-df.all
+  var_name<-"NDVI"
 
   #
   df_sel<-df%>%

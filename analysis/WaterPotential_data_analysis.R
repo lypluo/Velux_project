@@ -5,14 +5,19 @@ library(readxl)
 library(ggplot2)
 library(tidyverse)
 library(plyr)
+library(dplyr)
 
 #----------------------
 #(1)load the data
 #----------------------
-load.path<-"./data/"
+load.path<-"./data/Water_Potential/"
+#Needle and Twig
 load(paste0(load.path,"WaterPotential.data.RDA"))
+#Trunk
+load(paste0(load.path,"WaterPotential_Trunk_Davos.data.RDA"))
 
 ##converted to the water potential to negative values
+#Needle and Twig
 df.WaterP.sel<-df.WaterP %>%
   mutate(ID=`Branch ID`)%>%
   mutate(WP_Twig= -Twig,WP_Branch= -Branch,
@@ -21,17 +26,32 @@ df.WaterP.sel<-df.WaterP %>%
   mutate(sitename=substr(ID,4,6),
          CampaignNum=substr(ID,1,2),
          Position=substr(ID,12,12))
-WaterP.mean<-df.WaterP.sel[,-1]%>%
+#Trunk:
+df.WaterP_trunk.sel<-df.WaterP_trunk%>%
+  mutate(Trunk=as.numeric(Trunk))%>%
+  mutate(ID=`Branch ID`)%>%
+  mutate(WP_Trunk= -Trunk,
+         Trunk=NULL)%>%
+  select(ID,Height,WP_Trunk)%>%
+  mutate(sitename=substr(ID,4,6),
+         CampaignNum=substr(ID,1,2),
+         Position=substr(ID,11,11))
+#merge the data
+df.WaterP_all<-dplyr::bind_rows(df.WaterP.sel,df.WaterP_trunk.sel)
+#
+WaterP.mean<-df.WaterP_all[,-1]%>%
   group_by(sitename,CampaignNum,Position)%>%
   dplyr::summarise(WP_Branch.mean=mean(WP_Branch,na.rm=T),
                    WP_Branch.sd=sd(WP_Branch,na.rm = T),
                    WP_Twig.mean=mean(WP_Twig,na.rm=T),
-                   WP_Twig.sd=sd(WP_Twig,na.rm = T)
+                   WP_Twig.sd=sd(WP_Twig,na.rm = T),
+                   WP_Trunk.mean=mean(WP_Trunk,na.rm = T),
+                   WP_Trunk.sd=sd(WP_Trunk,na.rm=T)
   )
 ##adding information for the sampling dates:
 #For Tharandt: Mar,02; Mar,22; Apr,13; Apr,28; May,17; July,14
 #For Davos:Mar,08; Mar,27; Apr,21; May,03; May,22; July,17 
-df.WaterP.sel<-df.WaterP.sel %>%
+df.WaterP.final<-df.WaterP_all %>%
   mutate(Date=case_when(c(sitename=="THA" & CampaignNum=="C1") ~"2023-03-02",
                         c(sitename=="THA" & CampaignNum=="C2") ~"2023-03-22",
                         c(sitename=="THA" & CampaignNum=="C3") ~"2023-04-13",
@@ -46,15 +66,31 @@ df.WaterP.sel<-df.WaterP.sel %>%
                         c(sitename=="DAV" & CampaignNum=="C6") ~"2023-07-17"
   ))
 #save the data
-save.path<-"./data/"
-save(df.WaterP.sel,file=paste0(save.path,"WaterPotential.data.cleaned.RDA"))
+save.path<-"./data/Water_Potential/"
+save(df.WaterP.final,file=paste0(save.path,"WaterPotential.data.cleaned.RDA"))
 #----------------------
 #(2)plotting
 #----------------------
-
-df.WaterP.final<-df.WaterP.sel %>%
-  pivot_longer(c(WP_Branch,WP_Twig),
+df.WaterP.final<-df.WaterP.final %>%
+  pivot_longer(c(WP_Branch,WP_Twig,WP_Trunk),
                names_to = "WP_position",values_to = "WaterPotential")
+#WP_Trunk 
+p_WP_Trunk<-df.WaterP_all%>%
+  group_by(CampaignNum) %>%
+  ggplot(aes(x=Position,y=WP_Trunk,col=sitename,group=sitename))+
+  stat_summary(aes(x=Position,y=WP_Trunk,col=sitename),fun.data=mean_sdl, fun.args = list(mult=1),
+               geom="pointrange",size=0.8,width=0.2)+
+  geom_point()+
+  facet_wrap(~CampaignNum)+
+  ##adding the sampling dates:
+  # geom_text(x=1,y=-30,aes(x=Position,y=WP_Branch,group=sitename,label=Date),
+  #           data = df.WaterP.sel[df.WaterP.sel$sitename=="THA",])+
+  geom_text(x=1,y=-32,aes(x=Position,y=WP_Branch,group=sitename,label=Date),
+            data = df.WaterP.sel[df.WaterP.sel$sitename=="DAV",])+
+  theme_light()+
+  theme(axis.text = element_text(size=14),
+        axis.title = element_text(size=16))
+
 #WP_Branch  
 p_WP_Branch<-df.WaterP.sel%>%
   group_by(CampaignNum) %>%
