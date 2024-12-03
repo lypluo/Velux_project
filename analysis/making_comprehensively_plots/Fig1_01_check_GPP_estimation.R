@@ -230,6 +230,7 @@ df_add<-left_join(df_plot,df_pheno)%>%
 #
 p_boxplot<-df_add %>%
   ggplot(aes(x=sitename,y=gpp_res,fill=sitename))+
+  geom_hline(yintercept = 0,lty=2,size=1.1)+
   geom_violin()+
   geom_boxplot(width = 0.1, position = position_dodge(0.9),col="grey",size=1.05) +
   stat_summary(fun = mean, geom = "point", size=3, color = "black")+

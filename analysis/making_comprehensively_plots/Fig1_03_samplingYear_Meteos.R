@@ -206,7 +206,8 @@ df_add_2<-left_join(df_plot,df_pheno)%>%
   #only keep the data between [sos10-60,sos10_60]
   filter(DoY>sos10 & DoY<=sos10+60)%>%
   mutate(period="post-sos")
-df_add<-rbind(df_add_1,df_add_2)
+df_add<-rbind(df_add_1,df_add_2)%>%
+  mutate(period=factor(period,levels=c("pre-sos","post-sos")))
 #
 df_add_Dav<-df_add[df_add$sitename=="CH-Dav",]
 df_add_Tha<-df_add[df_add$sitename=="DE-Tha",]
@@ -222,6 +223,7 @@ df_add_final<-cbind(df_t,"period"=df_add_Dav$period)%>%
 p_Ta_boxplot<-df_add_final %>%
   filter(var=="Ta")%>%
   ggplot(aes(x=period,y=var_value,fill=period))+
+  geom_hline(yintercept = 0,lty=2,size=1.1)+
   geom_violin()+
   geom_boxplot(width = 0.1,position = position_dodge(0.9),col="grey",size=1.05) +
   # stat_summary(fun = mean, geom = "point", size=3, color = "black")+
@@ -238,6 +240,7 @@ p_Ta_boxplot<-df_add_final %>%
 p_PAR_boxplot<-df_add_final %>%
   filter(var=="PAR")%>%
   ggplot(aes(x=period,y=var_value,fill=period))+
+  geom_hline(yintercept = 0,lty=2,size=1.1)+
   geom_violin()+
   geom_boxplot(width = 0.1,position = position_dodge(0.9),col="grey",size=1.05) +
   # stat_summary(fun = mean, geom = "point", size=3, color = "black")+

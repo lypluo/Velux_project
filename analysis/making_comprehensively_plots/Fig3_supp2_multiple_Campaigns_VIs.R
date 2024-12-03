@@ -48,11 +48,11 @@ plot_function<-function(tiff.path,VI_name,VI_scale){
       coord_fixed()+
       labs(fill=VI_name)+
       theme_light()+
-      theme(legend.text = element_text(size = 26),
+      theme(legend.text = element_text(size = 24),
             legend.title = element_blank(),
             legend.background = element_blank(),
-            axis.text = element_text(size=24),
-            axis.text.x = element_text(angle = 12.5),
+            axis.text = element_text(size=20),
+            # axis.text.x = element_text(angle = 12.5),
             axis.title = element_text(size=26)
       )
     if(VI_name=="NDVI"){

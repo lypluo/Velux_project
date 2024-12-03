@@ -262,7 +262,6 @@ p_SWC_medium<-p_SWC_medium+
 #-------------------------
 #(4)making the boxplots
 #-------------------------
-##working to here!!
 df_plot<-df %>%
   group_by(sitename,DoY)%>%
   dplyr::summarise(Ta_mean=mean(TA,na.rm=T),
@@ -295,6 +294,7 @@ df_add_final<-cbind(df_t,"period"=df_add_Dav$period)%>%
 p_Ta_boxplot<-df_add_final %>%
   filter(var=="Ta")%>%
   ggplot(aes(x=period,y=var_value,fill=period))+
+  geom_hline(yintercept = 0,lty=2,size=1.1)+
   geom_violin()+
   geom_boxplot(width = 0.1,position = position_dodge(0.9),col="grey",size=1.05) +
   # stat_summary(fun = mean, geom = "point", size=3, color = "black")+
@@ -311,6 +311,7 @@ p_Ta_boxplot<-df_add_final %>%
 p_PAR_boxplot<-df_add_final %>%
   filter(var=="PAR")%>%
   ggplot(aes(x=period,y=var_value,fill=period))+
+  geom_hline(yintercept = 0,lty=2,size=1.1)+
   geom_violin()+
   geom_boxplot(width = 0.1,position = position_dodge(0.9),col="grey",size=1.05) +
   # stat_summary(fun = mean, geom = "point", size=3, color = "black")+
