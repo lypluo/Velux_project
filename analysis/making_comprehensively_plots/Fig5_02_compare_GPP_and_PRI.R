@@ -77,12 +77,12 @@ p_GPP_PRI <- ggplot(df_final_plot, aes(x = Date)) +
   geom_line(aes(y = PRI_filter_norm * 8), color = "red") +  # 第二个 Y 轴的线，缩放
   scale_y_continuous(
     name = expression( paste("GPP (g C m"^-2, " d"^-1, ")" ) ),
-    sec.axis = sec_axis(~ . /8, name = "PRI")  # 反向缩放
+    sec.axis = sec_axis(~ . /8, name = "Norm PRI")  # 反向缩放
   ) +
   # labs(title = "Dual Y-Axis Plot", x = "X-axis") +
   theme_light()+
   ##adding the CH-Dav
-  annotate(geom = "text",x=as.Date("2021-01-30"),
+  annotate(geom = "text",x=as.Date("2021-02-25"),
            y=15,label = "CH-Dav",size=8)+
   theme(
     axis.title.y = element_text(color="blue"),
@@ -105,20 +105,26 @@ df_final_plot<-df_final_plot %>%
 
 #
 library(ggpmisc) #adding R2..
-lm_greenup<-lm(data=df_final_plot %>%filter(greenup=="yes"),GPP ~ PRI)
+lm_greenup<-lm(data=df_final_plot %>%filter(greenup=="yes"),
+               GPP ~ PRI_filter_update)
 summary(lm_greenup)
-lm_all<-lm(data=df_final_plot,GPP ~ PRI)
+lm_all<-lm(data=df_final_plot,
+           GPP ~ PRI_filter_update)
 summary(lm_all)
 
+#
+df_final_plot<-df_final_plot %>%
+  mutate(greenup=ifelse(greenup=="yes","Greenup","Greendown"))%>%
+  mutate(greenup=factor(greenup,levels=c("Greenup","Greendown")))
 p_corr<-df_final_plot %>%
-  ggplot(aes(x=PRI,y=GPP,col=greenup))+
+  ggplot(aes(x=PRI_filter_update,y=GPP,col=greenup))+
   geom_point()+
-  scale_color_manual(values = c("yes"="forestgreen","no"="grey"))+
-  geom_smooth(data=df_final_plot%>%filter(greenup=="yes"),
+  scale_color_manual(values = c("Greenup"="forestgreen","Greendown"="grey"))+
+  geom_smooth(data=df_final_plot%>%filter(greenup=="Greenup"),
               method = "lm",
               se=TRUE,
               color="forestgreen")+
-  stat_poly_eq(data=df_final_plot%>%filter(greenup=="yes"),
+  stat_poly_eq(data=df_final_plot%>%filter(greenup=="Greenup"),
                geom = "text",position = "identity",
                size=6,
                col="forestgreen",
@@ -135,8 +141,9 @@ p_corr<-df_final_plot %>%
   annotate(geom = "text",x=-0.01,y=-1.5,
            label = paste0("p < 0.001"),col="forestgreen",size=6)+
   #for all the data:
-  geom_smooth(data=df_final_plot,method = "lm",se=TRUE,color="black")+
-  stat_poly_eq(data=df_final_plot,
+  geom_smooth(data=df_final_plot%>%filter(greenup=="Greendown"),
+              method = "lm",se=TRUE,color="black")+
+  stat_poly_eq(data=df_final_plot%>%filter(greenup=="Greendown"),
                geom = "text",position = "identity",
                col="black",
                size=6,
@@ -146,16 +153,19 @@ p_corr<-df_final_plot %>%
   annotate(geom = "text",x=-0.01,y=-2.5,
              label = paste0("p < 0.001"),col="black",size=6)+
   ylab(expression( paste("GPP (g C m"^-2, " d"^-1, ")" ) ))+
+  xlab("Filtered PRI")+
   ##adding the CH-Dav
   annotate(geom = "text",x=-0.135,
            y=15,label = "CH-Dav",size=8)+
+  #change the names for the legend
+  guides(color = guide_legend(title = " "))+
   theme_light()+
   theme(
     legend.text = element_text(size=20),
     axis.title = element_text(size=24),
     axis.text = element_text(size = 20),
     text = element_text(size=24),
-    legend.position = c(0.1,0.85),
+    legend.position = c(0.15,0.85),
     legend.background = element_blank()
   )+
   ylim(-4.5,15)
