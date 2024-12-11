@@ -89,18 +89,18 @@ p_C2_distribution<-df.spring %>%
   #only for 2023 mean:
   geom_point(aes(x=1-0.05,y=TA_mean,col=Year),
              data = df.spring_mean%>%filter(Year==2023),
-             col=adjustcolor("#FDE725",0.6),size=4.5)+
+             col=adjustcolor("#440154",0.6),size=4.5)+
   #add mean spring Ta for all years
   geom_point(aes(x=1,y=TA_mean),
              data=df.spring_mean_MultiY,col=adjustcolor("black",0.7),size=7)+
   #add mean spring Ta from different years
   geom_jitter(aes(x=1,y=TA_mean,col=Year),data = df.spring_mean)+
-  scale_color_viridis_d(option = "D")+
+  scale_color_viridis_d(option = "D",direction = -1)+
   #adding labels
-  annotate(geom = "text",x=1-0.02,
+  annotate(geom = "text",x=1-0.01,
            y=df.spring_mean[df.spring_mean$Year==2023,]$TA_mean,
            label="2023",size=4,
-           col="#FDE725")+ #color is for 2023
+           col="#440154")+ #color is for 2023
   xlim(0.4, 1.6)+
   #adding the C2 temperature
   geom_point(aes(x=1,y=TA),
@@ -126,5 +126,5 @@ p_C2_distribution<-df.spring %>%
 ###save the ggplot plots:
 save.path<-"./manuscript/comprehensive_plot/"
 ggsave(paste0(save.path,"Fig2_supp2_C2_weather_distribution.png"),
-       p_C2_distribution,width = 15,height=10)
+       p_C2_distribution,width = 13,height=5)
 
