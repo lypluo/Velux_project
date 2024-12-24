@@ -13,21 +13,46 @@ library(bigleaf)
 #(1)load the data-using daily data
 #-------------
 load.path<-"./data/EC_MeteoandFlux/"
-load(paste0(load.path,"df_daily_from_ICOS.RDA"))
+load(paste0(load.path,"df_HH_from_ICOS.RDA"))
 
-df.Dav<-df_DD$Dav
-df.Tha<-df_DD$Tha
+df.Dav<-df_HH$Dav
+df.Tha<-df_HH$Tha
 
-#mrege data from two sites
+#
 df.Dav<-df.Dav %>%
+  mutate(rDate=ymd_hm(Date_Time),Date_Time=NULL)%>%
   mutate(sitename="CH-Dav")
 df.Tha<-df.Tha %>%
+  mutate(rDate=ymd_hm(Date_Time),Date_Time=NULL)%>%
   mutate(sitename="DE-Tha")
-df<-rbind(df.Dav,df.Tha)
 
 #-------------------
-#(2) tidy the data 
+#(2) tidy the data and calculate the Gc(canopy conductance)
 #-------------------
+#filter the data-->remove the 48 hour data after rainfall before calculate Gs:
+#calculated Gs-->proxy for the Gc(canopy conductance)
+df.Dav_f<-filter.data(df.Dav,quality.control = FALSE,
+                      filter.precip = T,
+                      precip = "P",tprecip = 0.2,
+                      precip.hours = 24,records.per.hour = 2)
+df.Tha_f<-filter.data(df.Tha,quality.control = FALSE,
+                      filter.precip = T,
+                      precip = "P",tprecip = 0.2,
+                      precip.hours = 24,records.per.hour = 2)
+#agg to daily:
+df.Dav_f_daily<-df.Dav_f %>%
+  group_by(Date)%>%
+  summarize(P=sum(P),
+    across(c(NEE:WS,Pressure),function(x){mean(x,na.rm = T)}))%>%
+  mutate(sitename="CH-Dav")
+#
+df.Tha_f_daily<-df.Tha_f %>%
+  group_by(Date)%>%
+  summarize(P=sum(P),
+            across(c(NEE:WS,Pressure),function(x){mean(x,na.rm = T)}))%>%
+  mutate(sitename="DE-Tha")
+
+df<-rbind(df.Dav_f_daily,df.Tha_f_daily)
 #---merge the data according to doy
 df<-df %>%
   mutate(DoY=yday(Date),
@@ -37,7 +62,7 @@ df<-df %>%
 df<-df%>%
   #calculate Gs based on a simple gradient approach
   mutate(surface.conductance(LE=LE,Tair = TA,pressure = Pressure,
-                                VPD = VPD,formulation = "Flux-Gradient"))%>%
+                             VPD = VPD,formulation = "Flux-Gradient"))%>%
   #calculate ET
   mutate(ET=LE.to.ET(LE,TA))
 
@@ -103,9 +128,9 @@ df<-df%>%
 plot_fun_fluxes_mean<-function(df,sitename,flux_name,legend_flag){
   # df<-df
   # sitename<-"DE-Tha"
-  # flux_name<-"ET"
+  # flux_name<-"Gs_mol"
   # legend_flag<-F
-  
+  # 
   if(sitename=="CH-Dav"){
     df.use<-df%>%
       filter(sitename=="CH-Dav")%>%
@@ -175,13 +200,13 @@ plot_fun_fluxes_mean<-function(df,sitename,flux_name,legend_flag){
   }
   if(flux_name=="Gs_mol"){
     p_plot<-p_plot+
-      ylim(-0.1,0.25)+
+      ylim(-0.1,0.2)+
       geom_hline(yintercept = 0,lty=2,size=1.1)+
-      annotate(geom = "text",x=20,y=0.25,label=sitename,size=6)+
+      annotate(geom = "text",x=20,y=0.2,label=sitename,size=6)+
       annotate(geom = "segment",x=180,xend=190,y = -0.02,yend = -0.02,col="red",size=1.5)+
       annotate(geom = "segment",x=180,xend=190,y = -0.05,yend = -0.05,col="black",size=1.5)+
       annotate(geom = "text",x=220,y=c(-0.02,-0.05),label=c("2023","Mean"),size=5)+
-      ylab(expression("Gs (mol m"^-2*"s"^-1*")"))+
+      ylab(expression("Gc (mol m"^-2*"s"^-1*")"))+
       theme(axis.title = element_text(size=20),
             axis.text = element_text(size = 16),
             legend.position = c(0.35,0.8),
@@ -233,7 +258,7 @@ plot_Tha_ET<-plot_fun_fluxes_mean(df,"DE-Tha","ET",FALSE)+
 plot_grid(plot_Dav_ET,plot_Tha_ET,align = "h",nrow=1)
 
 #$######
-#Gs
+#Gs-->Gc
 #$######
 plot_Dav_Gs<-plot_fun_fluxes_mean(df,"CH-Dav","Gs_mol",FALSE)+
   xlab("")
