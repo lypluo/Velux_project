@@ -16,7 +16,6 @@ library(cowplot)
 load.path<-"./data/Comprehensive_plot_data/Fig5/"
 load(paste0(load.path,"df.merge.RDA"))
 
-
 #----------------------
 #(2)optimilized the temperature modifier f_Ts 
 #by refer Luo et al., 2023
@@ -237,26 +236,39 @@ for(i in 1:length(sel_sites)){
 #        x = "Day of year") +
 #   facet_wrap(~sitename)
 #update using original p-model
-p_with_adjT_season_plot<-df_modobs %>%
+df_plot<-df_modobs %>%
   mutate(doy = lubridate::yday(date)) %>%
   #select CH-Dav
   filter(sitename=="CH-Dav")%>%
   group_by(sitename, doy) %>%
   dplyr::summarise(obs = mean(gpp_obs, na.rm = TRUE),
+                   obs_sd=sd(gpp_obs,na.rm=TRUE),
                    # mod_old_ori=mean(gpp_mod_old_ori, na.rm = TRUE),
                    mod_recent_ori=mean(gpp_mod_recent_ori, na.rm = TRUE),
                    mod_recent_optim=mean(gpp_mod_recent_optim,na.rm = TRUE)) %>%
-  pivot_longer(c(obs,mod_recent_ori,mod_recent_optim), names_to = "Source", values_to = "gpp") %>%
+  pivot_longer(c(obs,mod_recent_ori,mod_recent_optim), 
+               names_to = "Source", values_to = "gpp")%>%
+  mutate(Source=factor(Source,levels=c("obs","mod_recent_ori","mod_recent_optim")))
+p_with_adjT_season_plot<- df_plot %>%
   ggplot(aes(doy, gpp, color = Source)) +
+  geom_ribbon(
+    aes(x = doy, ymin = gpp - obs_sd, 
+        ymax = gpp + obs_sd),
+    fill="grey",data=df_plot%>%filter(Source=="obs"),
+    alpha = 0.2,
+    col=adjustcolor("grey",0.2)
+  ) +
   geom_line() +
   scale_color_manual("GPP sources",values = c("mod_recent_ori" = "red",
        "mod_recent_optim" = "dodgerblue", "obs" = "black"),
-                     labels = c("Orig. P-model", "Accli. P-model","Observations")) +
+        labels = c("Observations","Orig. P-model","Accli. P-model")) +
   labs(y = expression( paste("GPP (g C m"^-2, " d"^-1, ")" ) ),
        x = "DoY") +
-  facet_wrap(~sitename)+
+  # facet_wrap(~sitename)+
+  annotate(geom = "text",x=20,y=15,label = "CH-Dav",size=8)+
   theme_light()+
   theme(
+    legend.background = element_blank(),
     legend.text = element_text(size=20),
     legend.key.size = unit(2, 'lines'),
     axis.title = element_text(size=24),
@@ -266,8 +278,9 @@ p_with_adjT_season_plot<-df_modobs %>%
     # panel.grid.minor = element_blank(),
     # panel.background = element_rect(colour ="grey",fill="white"),
     # legend.background = element_blank(),
-    legend.position = c(0.5,0.15)
-  )
+    legend.position = c(0.5,0.2)
+  )+
+  ylim(-4.5,15)
 
 ####
 #save the plot

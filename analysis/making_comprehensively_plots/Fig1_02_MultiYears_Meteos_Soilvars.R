@@ -68,6 +68,16 @@ df<-df %>%
   mutate(DoY=yday(Date),
          Year=year(Date)
   )
+#calculate the mean annual temperature and precipitation in winter
+df %>%
+  group_by(sitename,Year)%>%
+  filter(DoY>=335 | DoY<=59)%>%
+  summarise(TA_mean=mean(TA,na.rm = T),
+            P_sum=sum(P,na.rm = T))%>%
+  group_by(sitename)%>%
+  summarise(TA_mean=mean(TA_mean,na.rm = T),
+            P_sum=mean(P_sum,na.rm = T))
+
 
 #---------------------------
 #3) making the plots

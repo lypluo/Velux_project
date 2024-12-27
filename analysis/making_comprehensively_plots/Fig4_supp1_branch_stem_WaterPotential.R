@@ -102,14 +102,14 @@ plot_point_fun_meansd<-function(df,var_name,legend.xy,arrow.xy,arrow.flag){
 #branch water potential
 ##-------------
 #Branch
-p_WP_Branch_Date<-plot_point_fun_meansd(df.WP,"WP_Branch",c(0.36,0.2),
+p_WP_Branch_Date<-plot_point_fun_meansd(df.WP,"WP_Branch",c(0.1,0.85),
                data.frame(x=4,xend=4,y=-25,yend=-30),
                                       TRUE)+
   labs(
     x="2023",
     y = expression(psi[branch]*" (bar)")
   )+
-  theme(legend.position = "none")+
+  # theme(legend.position = "none")+
   #adding Campaign Nr.
   annotate(geom = "text",x=c(1.5),y=rep(-32),label=c("C1"),size=6)+
   annotate(geom = "text",x=c(3.5),y=rep(-32),label=c("C2"),size=6)+
@@ -119,7 +119,7 @@ p_WP_Branch_Date<-plot_point_fun_meansd(df.WP,"WP_Branch",c(0.36,0.2),
   annotate(geom = "text",x=c(11.5),y=rep(-32),label=c("C6"),size=6)
 #big branch
 p_WP_Trunk_Date<-plot_point_fun_meansd(df.WP,"WP_Trunk",c(0.36,0.2),
-                 data.frame(x=4,xend=4,y=-20,yend=-30),
+                 data.frame(x=2,xend=2,y=-20,yend=-30),
                                         TRUE)+
   labs(
     x="2023",

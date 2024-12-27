@@ -110,17 +110,17 @@ p_stand<-df.SF_stand %>%
 p_eachtrees<-ggplot()+
   # geom_point(aes(x=doy,y=SFD),col=adjustcolor("grey50",1),
   #            data=df.SFD_eachtree%>%filter(Year==2023))+
-  geom_ribbon(aes(x=doy,ymin=SFD_mean-SFD_sd,ymax=SFD_mean+SFD_sd),
-              data=df.SFD_eachtree_mean2023,
-              fill="gray",size=1.5)+
+  # geom_ribbon(aes(x=doy,ymin=SFD_mean-SFD_sd,ymax=SFD_mean+SFD_sd),
+  #             data=df.SFD_eachtree_mean2023,
+  #             fill="gray",size=1.5)+
   stat_smooth(aes(x=doy,y=SFD,
                   col=factor(Tree_ID)),span=0.2,
               data=df.SFD_eachtree%>%filter(Year==2023),
               se=FALSE)+
   scale_color_viridis_d()+
   stat_smooth(aes(x=doy,y=SFD_mean),
-              data=df.SFD_eachtree_mean2023,
-              col=adjustcolor("black",0.8),size=2,se=FALSE)+
+              data=df.SFD_eachtree_mean2023,span = 0.2,
+              col=adjustcolor("black",0.8),size=2,se=TRUE)+
   # addding date: "2023-03-27"
   geom_vline(xintercept = 86,col="black")+
   annotate(geom="text",x=110,y=0,

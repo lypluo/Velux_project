@@ -192,11 +192,11 @@ plot_fun_fluxes_mean<-function(df,sitename,flux_name,legend_flag){
       ylab(expression("ET (kg m"^-2*"s"^-1*")"))+
       theme(axis.title = element_text(size=20),
             axis.text = element_text(size = 16),
-            legend.position = c(0.35,0.8),
+            legend.position = c(0.3,0.75),
             legend.title = element_text(size=18),
             legend.text = element_text(size=16),
             legend.background = element_blank())+
-      guides(color = guide_legend(ncol = 4))   # 设置图例为4列
+      guides(color = guide_legend(ncol = 3))   # 设置图例为4列
   }
   if(flux_name=="Gs_mol"){
     p_plot<-p_plot+
@@ -209,32 +209,32 @@ plot_fun_fluxes_mean<-function(df,sitename,flux_name,legend_flag){
       ylab(expression("Gc (mol m"^-2*"s"^-1*")"))+
       theme(axis.title = element_text(size=20),
             axis.text = element_text(size = 16),
-            legend.position = c(0.35,0.8),
+            legend.position = c(0.3,0.75),
             legend.title = element_text(size=18),
             legend.text = element_text(size=16),
             legend.background = element_blank())+
-      guides(color = guide_legend(ncol = 4))   # 设置图例为4列
+      guides(color = guide_legend(ncol = 3))   # 设置图例为4列
   }
   #
   #add lines:
-  if(sitename=="DE-Tha" & flux_name=="ET"){
-    p_plot<-p_plot+
-      #for averaged years
-      geom_segment(aes(x=25,y=0.3e-05,xend = 25,yend = 0),size=1.05,
-                   color = "black",lty=2)+
-      #for year 2023:
-      geom_segment(aes(x=30,y=0.3e-05,xend = 30,yend = 0),size=1.05,
-                   color = "red",lty=2)
-  }
-  if(sitename=="CH-Dav"& flux_name=="ET"){
-    p_plot<-p_plot+
-      #for averaged years
-      geom_segment(aes(x=30,y=0.6e-05,xend = 30,yend = 0),size=1.1,
-                   color = "black",lty=2)+
-      #for year 2023:
-      geom_segment(aes(x=38,y=0.3e-05,xend = 38,yend = 0),size=1.1,
-                   color = "red",lty=2)
-  }
+  # if(sitename=="DE-Tha" & flux_name=="ET"){
+  #   p_plot<-p_plot+
+  #     #for averaged years
+  #     geom_segment(aes(x=25,y=0.3e-05,xend = 25,yend = 0),size=1.05,
+  #                  color = "black",lty=2)+
+  #     #for year 2023:
+  #     geom_segment(aes(x=30,y=0.3e-05,xend = 30,yend = 0),size=1.05,
+  #                  color = "red",lty=2)
+  # }
+  # if(sitename=="CH-Dav"& flux_name=="ET"){
+  #   p_plot<-p_plot+
+  #     #for averaged years
+  #     geom_segment(aes(x=30,y=0.6e-05,xend = 30,yend = 0),size=1.1,
+  #                  color = "black",lty=2)+
+  #     #for year 2023:
+  #     geom_segment(aes(x=38,y=0.3e-05,xend = 38,yend = 0),size=1.1,
+  #                  color = "red",lty=2)
+  # }
   #
   if(legend_flag==FALSE){
     p_plot<-p_plot+
@@ -273,9 +273,4 @@ p_Eco_ET_Gs<-plot_grid(plot_Dav_ET,plot_Dav_Gs,plot_Tha_ET,plot_Tha_Gs,
 ###save the ggplot plots:
 save.path<-"./data/Comprehensive_plot_data/Fig4/"
 save(p_Eco_ET_Gs,file=paste0(save.path,"p_Eco_ET_Gs.RDA"))
-
-
-
-
-
 

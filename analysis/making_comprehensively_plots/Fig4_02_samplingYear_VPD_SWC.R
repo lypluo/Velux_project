@@ -134,10 +134,10 @@ plot_fun<-function(df,var,x_f,legend_f,df_rect){
     xlab("2023")+
     geom_rect(data=df_rect,
               mapping=aes(xmin=x1, xmax=x2, ymin=y1, ymax=y2), 
-              fill="blue",alpha=0.4)+
-    geom_rect(data=df_rect,
-              mapping=aes(xmin=x2, xmax=x3, ymin=y1, ymax=y2), 
               fill="blue",alpha=0.2)+
+    # geom_rect(data=df_rect,
+    #           mapping=aes(xmin=x2, xmax=x3, ymin=y1, ymax=y2), 
+    #           fill="blue",alpha=0.2)+
     geom_point(aes(Date,y),data=df_sel_Tha_Samp,col="orange",size=5)+
     geom_line(aes(Date,y_15),data=df_sel[df_sel$sitename=="Tha",],col="orange",size=1.2)+
     geom_point(aes(Date,y),data=df_sel_Dav_Samp,col="brown1",size=5)+

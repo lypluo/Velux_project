@@ -170,9 +170,9 @@ plot_fun_GPP_mean<-function(df,sitename,legend_flag){
   
 }
 #
-plot_Dav<-plot_fun_GPP_mean(df,"CH-Dav")+
+plot_Dav<-plot_fun_GPP_mean(df,"CH-Dav",TRUE)+
   xlab("")
-plot_Tha<-plot_fun_GPP_mean(df,"DE-Tha")
+plot_Tha<-plot_fun_GPP_mean(df,"DE-Tha",FALSE)
 #
 plot_grid(plot_Tha,plot_Dav,align = "h",labels = c("A","B"),nrow=1)
 

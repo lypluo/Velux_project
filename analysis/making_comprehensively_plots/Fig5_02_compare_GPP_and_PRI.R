@@ -82,7 +82,7 @@ p_GPP_PRI <- ggplot(df_final_plot, aes(x = Date)) +
   # labs(title = "Dual Y-Axis Plot", x = "X-axis") +
   theme_light()+
   ##adding the CH-Dav
-  annotate(geom = "text",x=as.Date("2021-02-25"),
+  annotate(geom = "text",x=as.Date("2021-03-31"),
            y=15,label = "CH-Dav",size=8)+
   theme(
     axis.title.y = element_text(color="blue"),
@@ -114,12 +114,12 @@ summary(lm_all)
 
 #
 df_final_plot<-df_final_plot %>%
-  mutate(greenup=ifelse(greenup=="yes","Greenup","Greendown"))%>%
-  mutate(greenup=factor(greenup,levels=c("Greenup","Greendown")))
+  mutate(greenup=ifelse(greenup=="yes","Greenup","Non-Greenup"))%>%
+  mutate(greenup=factor(greenup,levels=c("Greenup","Non-Greenup")))
 p_corr<-df_final_plot %>%
   ggplot(aes(x=PRI_filter_update,y=GPP,col=greenup))+
   geom_point()+
-  scale_color_manual(values = c("Greenup"="forestgreen","Greendown"="grey"))+
+  scale_color_manual(values = c("Greenup"="forestgreen","Non-Greenup"="grey"))+
   geom_smooth(data=df_final_plot%>%filter(greenup=="Greenup"),
               method = "lm",
               se=TRUE,
@@ -141,9 +141,9 @@ p_corr<-df_final_plot %>%
   annotate(geom = "text",x=-0.01,y=-1.5,
            label = paste0("p < 0.001"),col="forestgreen",size=6)+
   #for all the data:
-  geom_smooth(data=df_final_plot%>%filter(greenup=="Greendown"),
+  geom_smooth(data=df_final_plot%>%filter(greenup=="Non-Greenup"),
               method = "lm",se=TRUE,color="black")+
-  stat_poly_eq(data=df_final_plot%>%filter(greenup=="Greendown"),
+  stat_poly_eq(data=df_final_plot%>%filter(greenup=="Non-Greenup"),
                geom = "text",position = "identity",
                col="black",
                size=6,
@@ -155,7 +155,7 @@ p_corr<-df_final_plot %>%
   ylab(expression( paste("GPP (g C m"^-2, " d"^-1, ")" ) ))+
   xlab("Filtered PRI")+
   ##adding the CH-Dav
-  annotate(geom = "text",x=-0.135,
+  annotate(geom = "text",x=-0.125,
            y=15,label = "CH-Dav",size=8)+
   #change the names for the legend
   guides(color = guide_legend(title = " "))+
@@ -165,7 +165,7 @@ p_corr<-df_final_plot %>%
     axis.title = element_text(size=24),
     axis.text = element_text(size = 20),
     text = element_text(size=24),
-    legend.position = c(0.15,0.85),
+    legend.position = c(0.2,0.85),
     legend.background = element_blank()
   )+
   ylim(-4.5,15)

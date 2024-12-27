@@ -194,7 +194,7 @@ p_A_Date<-plot_boxplot_fun(df.merge_A,"A",c(0.04,0.9))+
   )
 #save the plot:
 p_A_Amax<-plot_grid(p_A_Date,p_Amax_Date,align = "v",ncol=1,nrow=2,
-                    labels=c("A","B"))
+                    labels=c("(a)","(b)"))
 #
 save.path<-"./manuscript/comprehensive_plot/"
 ggsave(paste0(save.path,"Fig2_supp1_A_Amax.png"),

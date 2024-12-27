@@ -236,8 +236,8 @@ p_boxplot<-df_add %>%
   stat_summary(fun = mean, geom = "point", size=3, color = "black")+
   labs(y = expression( paste(Delta*"GPP (g C m"^-2, " d"^-1, ")" ) ),
        x = "")+
-  scale_fill_manual(values = c("CH-Dav"="orange",
-                               "DE-Tha"="blue"))+
+  scale_fill_manual(values = c("CH-Dav"="brown1",
+                               "DE-Tha"="orange"))+
   theme_light()+
   theme(legend.position = "none",
         axis.text = element_text(size=16),

@@ -77,7 +77,7 @@ df.all<-left_join(df.all,df.filter_max)
 #----------
 plot_fun<-function(df,var_name){
   # df<-df.all
-  # var_name<-"NDVI"
+  # var_name<-"PRI_norm"
 
   #
   df_sel<-df%>%
@@ -109,7 +109,7 @@ plot_fun<-function(df,var_name){
     theme_light()+
     ylab(var_name)+
     xlab("")+
-    theme(legend.position = c(0.9,0.25),
+    theme(legend.position = c(0.8,0.25),
           legend.title = element_blank(),
           legend.text = element_text(size = 22),
           legend.background = element_blank(),
@@ -127,7 +127,11 @@ plot_fun<-function(df,var_name){
       geom_bar(aes(x=Date,y=D_SNOW/50),stat="identity",fill=adjustcolor("orange",0.6),
                data = df %>% filter(sitename=="DE-Tha")%>%
                  filter(Date>=as.Date("2023-01-01")&Date<=as.Date("2023-10-31"))%>%
-                 filter(!is.na(D_SNOW) & D_SNOW>0))
+                 filter(!is.na(D_SNOW) & D_SNOW>0))+
+      #add second axix
+      scale_y_continuous(
+        sec.axis = sec_axis(~ . *50, name = expression("D"[snow]*" (cm)" ))  # 反向缩放
+      )
       #2024-DE-Tha
       # geom_bar(aes(x=Date,y=D_SNOW/50),stat="identity",fill=adjustcolor("orange",0.6),
       #          data = df %>% filter(sitename=="DE-Tha")%>%
@@ -139,6 +143,11 @@ plot_fun<-function(df,var_name){
       # scale_fill_manual(values = c("CH-Dav"=adjustcolor("tomato",0.1),
       #                               "DE-Tha"=adjustcolor("cyan3",0.1)))
   # }
+    #
+    if(var_name=="PRI"){
+    p_plot<-p_plot+
+      ylim(0,1.2)
+    }
     return(p_plot)
 }
 ##
@@ -149,7 +158,6 @@ p_NDVI<-plot_fun(df.all,"NDVI")+
 # normalize it
 p_PRI<-plot_fun(df.all,"PRI_norm")+
   ylab(expression("Norm PRI"[Crown]))+
-  ylim(0,1.2)+
   # theme(legend.position = "none")+
   xlab("2023")
 p_SIF<-plot_fun(df.all,"SIF_a_sfm")+

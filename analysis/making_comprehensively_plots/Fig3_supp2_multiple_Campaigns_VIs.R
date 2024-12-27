@@ -17,7 +17,7 @@ load.path<-"D:/EE_WSL/IMPACT_project/Drones_data/ArcGIS_processing/Davos_test_Pr
 #write the functions for the plotting
 plot_function<-function(tiff.path,VI_name,VI_scale){
   # tiff.path<-load.path
-  # VI_name<-"NDVI"
+  # VI_name<-"CCI"
   # VI_scale<-"Landscape"
   
   df_agg<-c()
@@ -37,6 +37,12 @@ plot_function<-function(tiff.path,VI_name,VI_scale){
         filter(VI>0 & VI<1)
     }
     if(VI_name=="PRI"){
+      df.proc<-rast_df %>%
+        filter(VI<1)%>%
+        #after checking the data,limit the range of the data
+        filter(VI!=0 & VI>-0.2 &VI<0.1)
+    }
+    if(VI_name=="CCI"){
       df.proc<-rast_df %>%
         filter(VI<1)%>%
         #after checking the data,limit the range of the data
@@ -65,6 +71,15 @@ plot_function<-function(tiff.path,VI_name,VI_scale){
         theme(axis.title = element_blank())
     }
     if(VI_name=="PRI"){
+      p.proc<-p.proc+
+        scale_fill_gradientn(colors = c(
+          "#440154","#482878","#3E4B8B","#31688E","#26828E",
+          "#1F9B77","#5CDB5A","#B8DE29", "#FDE725"),
+          limits=c(-0.2,0.1))+
+        # annotate(geom = "text",x=2784385,y=1187640,label="C5",size=10)+
+        theme(axis.title = element_blank())
+    }
+    if(VI_name=="CCI"){
       p.proc<-p.proc+
         scale_fill_gradientn(colors = c(
           "#440154","#482878","#3E4B8B","#31688E","#26828E",
@@ -102,11 +117,20 @@ p_UAV_Eco_PRI<-plot_grid(p_Landscape_PRI[[1]],p_Landscape_PRI[[2]],p_Landscape_P
           labels = c(paste0("C",1:6))
 )
 
+### For CCI
+p_Landscape_CCI<-plot_function(load.path,"CCI","Landscape")
+#
+p_UAV_Eco_CCI<-plot_grid(p_Landscape_CCI[[1]],p_Landscape_CCI[[2]],p_Landscape_CCI[[3]],
+                         p_Landscape_CCI[[4]],p_Landscape_CCI[[5]],p_Landscape_CCI[[6]],
+                         align = "hv",nrow=2,ncol=3,
+                         labels = c(paste0("C",1:6))
+)
+
 ###############
 ### For crown NDVI
 load.path<-"D:/EE_WSL/IMPACT_project/Drones_data/ArcGIS_processing/Davos_test_Project/exported_tiff/Crowns/"
 p_Crown_NDVI<-plot_function(load.path,"NDVI","Crown")
-#
+#NDVI
 p_UAV_Crown_NDVI<-plot_grid(p_Crown_NDVI[[1]],p_Crown_NDVI[[2]],p_Crown_NDVI[[3]],
           p_Crown_NDVI[[4]],p_Crown_NDVI[[5]],p_Crown_NDVI[[6]],
           align = "hv",nrow=2,ncol=3,
@@ -122,14 +146,25 @@ p_UAV_Crown_PRI<-plot_grid(p_Crown_PRI[[1]],p_Crown_PRI[[2]],p_Crown_PRI[[3]],
           labels = c(paste0("C",1:6))
 )
 
+### For CCI
+p_Crown_CCI<-plot_function(load.path,"CCI","Crown")
+
+p_UAV_Crown_CCI<-plot_grid(p_Crown_CCI[[1]],p_Crown_CCI[[2]],p_Crown_CCI[[3]],
+                           p_Crown_CCI[[4]],p_Crown_CCI[[5]],p_Crown_CCI[[6]],
+                           align = "hv",nrow=2,ncol=3,
+                           labels = c(paste0("C",1:6))
+)
+
 #-------------------
 #(3) save the plots
 #-------------------
 save.path<-"./manuscript/comprehensive_plot/"
-#For PRI_Eco
+#For NDVI_Eco
 ggsave(paste0(save.path,"Fig3_supp2_NDVI_landscape.png"),
        p_UAV_Eco_NDVI,width = 19.9,height=11)
 #For PRI_Eco
 ggsave(paste0(save.path,"Fig3_supp3_PRI_landscape.png"),
        p_UAV_Eco_PRI,width = 19.9,height=11)
-
+#For CCI_Eco
+ggsave(paste0(save.path,"Fig3_supp3_CCI_landscape.png"),
+       p_UAV_Eco_CCI,width = 19.9,height=11)

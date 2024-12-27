@@ -189,7 +189,7 @@ p_SWC_shallow<-plot_fun_meteo(df,"SWC_shallow",FALSE)+
   ylab(expression("SWC"[shallow]*" (%)"))
 p_SWC_medium<-plot_fun_meteo(df,"SWC_medium",FALSE)+
   ylab(expression("SWC"[medium]*" (%)"))
-p_Ts<-plot_fun_meteo(df,"TS_1",FALSE)
+p_Ts<-plot_fun_meteo(df,"TS_1",TRUE)
 
 
 ##-----------

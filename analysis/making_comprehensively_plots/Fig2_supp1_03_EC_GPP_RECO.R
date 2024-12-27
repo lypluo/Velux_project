@@ -140,7 +140,7 @@ plot_fun_GPP_mean<-function(df,sitename,legend_flag){
     theme_light()+
     theme(axis.title = element_text(size=20),
           axis.text = element_text(size = 16),
-          legend.position =c(0.2,0.75),
+          legend.position =c(0.25,0.75),
           legend.title = element_text(size=18),
           legend.text = element_text(size=16),
           legend.background = element_blank()
@@ -292,54 +292,59 @@ plot_fun_RECO_mean<-function(df,sitename,legend_flag){
   df.RECO.use.mean_s<-df.RECO.use.mean %>%
     mutate(RECO_mean_smooth=loess(RECO_mean ~ DoY,span = 0.6)$fitted)
   RECO.stats_mean<-df.RECO.use.mean_s%>%
-    summarise(max_RECO=quantile(RECO_mean_smooth,1,na.rm = T),
-              min_RECO=quantile(RECO_mean_smooth,0,na.rm = T),
+    summarise(max_RECO=quantile(RECO_mean_smooth,0.95,na.rm = T),
+              min_RECO=quantile(RECO_mean_smooth,0.05,na.rm = T),
               amp_RECO=max_RECO-min_RECO,
               value_for_amp10=0.1*amp_RECO+min_RECO)
-  RECOmean_min<-30+which.min(as.numeric(abs(RECO.stats_mean$min_RECO - 
+  RECOmean_amp10<-30+which.min(as.numeric(abs(RECO.stats_mean$value_for_amp10 - 
                                                df.RECO.use.mean_s$RECO_mean_smooth[30:250])))-1
   #For RECO 2023
   df.RECO.use.2023_s<-df.RECO.use%>%
     filter(Year==2023)%>%
     mutate(RECO_smooth=loess(RECO ~ DoY,span = 0.6)$fitted)
   RECO.stats_2023<-df.RECO.use.2023_s%>%
-    summarise(max_RECO=quantile(RECO_smooth,1,na.rm = T),
-              min_RECO=quantile(RECO_smooth,0,na.rm = T),
+    summarise(max_RECO=quantile(RECO_smooth,0.95,na.rm = T),
+              min_RECO=quantile(RECO_smooth,0.05,na.rm = T),
               amp_RECO=max_RECO-min_RECO,
               value_for_amp10=0.1*amp_RECO+min_RECO)
-  RECO2023_min<-30+which.min(as.numeric(abs(RECO.stats_2023$min_RECO - 
-                                               df.RECO.use.2023_s$RECO_smooth[30:250])))-1
+  RECO2023_amp10<-30+which.min(as.numeric(abs(RECO.stats_2023$value_for_amp10 - 
+          df.RECO.use.2023_s$RECO_smooth[30:250])))-1
+  if(sitename=="CH-Dav"){
+    RECO2023_amp10<-75+which.min(as.numeric(abs(RECO.stats_2023$value_for_amp10 - 
+       df.RECO.use.2023_s$RECO_smooth[75:250])))-1
+  }
   
   #add lines:
   if(sitename=="CH-Dav"){
     
     p_plot<-p_plot+
       #for averaged years
-      geom_segment(aes(x=RECOmean_min,y=0,
-                       xend = RECOmean_min,
+      geom_segment(aes(x=RECOmean_amp10,y=0,
+                       xend = RECOmean_amp10,
                        #-0.2-->is the adjustment for the height
-                       yend = df.RECO.use.mean_s$RECO_mean_smooth[RECOmean_min]+0.26),size=1.1,
+                       yend = df.RECO.use.mean_s$RECO_mean_smooth[RECOmean_amp10]),size=1.1,
                    color = "black",lty=2)+
       #for year 2023:
-      geom_segment(aes(x=RECO2023_min,y=0,
-                       xend = RECO2023_min,
+      geom_segment(aes(x=RECO2023_amp10,y=0,
+                       xend = RECO2023_amp10,
                        #-0.1-->is the adjustment for the height
-                       yend = df.RECO.use.2023_s$RECO_smooth[RECO2023_min]+0.28),size=1.1,
+                       yend = df.RECO.use.2023_s$RECO_smooth[RECO2023_amp10]),size=1.1,
                    color = "red",lty=2)
   }
   if(sitename=="DE-Tha"){
     p_plot<-p_plot+
       #for year 2023:
-      geom_segment(aes(x=RECO2023_min,y=0,
-                       xend = RECO2023_min,
+      geom_segment(aes(x=RECO2023_amp10,y=0,
+                       xend = RECO2023_amp10,
                        #-0.1-->is the adjustment for the height
-                       yend = df.RECO.use.2023_s$RECO_smooth[RECO2023_min]+0.05),size=1.1,
+                       yend = df.RECO.use.2023_s$RECO_smooth[RECO2023_amp10]-0.01),size=1.1,
                    color = "red",lty=2)+
       #for averaged years
-      geom_segment(aes(x=RECOmean_min,y=0,
-                       xend = RECOmean_min,
+      geom_segment(aes(x=RECOmean_amp10,y=0,
+                       xend = RECOmean_amp10,
                        #-0.2-->is the adjustment for the height
-                       yend = df.RECO.use.mean_s$RECO_mean_smooth[RECOmean_min]+0.05),size=1.1,
+                       yend = df.RECO.use.mean_s$RECO_mean_smooth[RECOmean_amp10]-0.02),
+                   size=1.1,
                    color = "black",lty=2)
   }
   
@@ -367,7 +372,7 @@ p_merge<-plot_grid(p_GPP,p_RECO,
                    align = "hv")
 #save the plots
 save.path<-"./manuscript/comprehensive_plot/"
-ggsave(paste0(save.path,"Fig2_supp1_EC_GPP.png"),
+ggsave(paste0(save.path,"Fig2_supp1_EC_GPP_RECO.png"),
        p_merge,width = 18,height=15)
 
 

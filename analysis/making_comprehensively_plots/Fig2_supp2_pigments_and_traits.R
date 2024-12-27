@@ -202,7 +202,13 @@ p_Cab_Date<-plot_point_fun_meansd(df.merge_Pigments,"Cab",
         legend.position = c(0.1,0.95),
         legend.background = element_rect(),
         plot.margin = margin(0,5,0,5),
-        panel.spacing.y = unit(0.05, "lines"))
+        panel.spacing.y = unit(0.05, "lines"))+
+  annotate(geom = "text",x=c(1.5),y=rep(0.3),label=c("C1"),size=6)+
+  annotate(geom = "text",x=c(3.5),y=rep(0.3),label=c("C2"),size=6)+
+  annotate(geom = "text",x=c(5.5),y=rep(0.3),label=c("C3"),size=6)+
+  annotate(geom = "text",x=c(7.5),y=rep(0.3),label=c("C4"),size=6)+
+  annotate(geom = "text",x=c(9.5),y=rep(0.3),label=c("C5"),size=6)+
+  annotate(geom = "text",x=c(11.5),y=rep(0.3),label=c("C6"),size=6)
 #Car:
 p_Car_Date<-plot_point_fun_meansd(df.merge_Pigments,"Car",
                       c(0.1,0.9),
@@ -218,7 +224,13 @@ p_Car_Date<-plot_point_fun_meansd(df.merge_Pigments,"Car",
         legend.position = "none",
         legend.background = element_rect(),
         plot.margin = margin(0,5,0,5),
-        panel.spacing.y = unit(0.05, "lines"))
+        panel.spacing.y = unit(0.05, "lines"))+
+  annotate(geom = "text",x=c(1.5),y=rep(0.2),label=c("C1"),size=6)+
+  annotate(geom = "text",x=c(3.5),y=rep(0.2),label=c("C2"),size=6)+
+  annotate(geom = "text",x=c(5.5),y=rep(0.2),label=c("C3"),size=6)+
+  annotate(geom = "text",x=c(7.5),y=rep(0.2),label=c("C4"),size=6)+
+  annotate(geom = "text",x=c(9.5),y=rep(0.2),label=c("C5"),size=6)+
+  annotate(geom = "text",x=c(11.5),y=rep(0.2),label=c("C6"),size=6)
 
 
 # Car/Cab
@@ -237,7 +249,13 @@ p_CartoCab_Date<-plot_point_fun_meansd(df.merge_Pigments,"CartoCab_ratio",
         legend.position = "none",
         legend.background = element_rect(),
         plot.margin = margin(0,5,0,5),
-        panel.spacing.y = unit(0.05, "lines"))
+        panel.spacing.y = unit(0.05, "lines"))+
+  annotate(geom = "text",x=c(1.5),y=rep(0.2),label=c("C1"),size=6)+
+  annotate(geom = "text",x=c(3.5),y=rep(0.2),label=c("C2"),size=6)+
+  annotate(geom = "text",x=c(5.5),y=rep(0.2),label=c("C3"),size=6)+
+  annotate(geom = "text",x=c(7.5),y=rep(0.2),label=c("C4"),size=6)+
+  annotate(geom = "text",x=c(9.5),y=rep(0.2),label=c("C5"),size=6)+
+  annotate(geom = "text",x=c(11.5),y=rep(0.2),label=c("C6"),size=6)
 
 #addtional plots:
 #theorotically, if ratio of Cha/Chb high-->higher light photoprotection according to Liyao
@@ -254,7 +272,13 @@ p_ChatoChb_Date<-plot_point_fun_meansd(df.merge_Pigments,"Car",c(0.9,0.9),
         axis.title.x = element_blank(),
         legend.position = "none",
         legend.background = element_rect(),
-        plot.margin = margin(0,5,0,5))
+        plot.margin = margin(0,5,0,5))+
+  annotate(geom = "text",x=c(1.5),y=rep(0.2),label=c("C1"),size=6)+
+  annotate(geom = "text",x=c(3.5),y=rep(0.2),label=c("C2"),size=6)+
+  annotate(geom = "text",x=c(5.5),y=rep(0.2),label=c("C3"),size=6)+
+  annotate(geom = "text",x=c(7.5),y=rep(0.2),label=c("C4"),size=6)+
+  annotate(geom = "text",x=c(9.5),y=rep(0.2),label=c("C5"),size=6)+
+  annotate(geom = "text",x=c(11.5),y=rep(0.2),label=c("C6"),size=6)
 
 ##-------------
 #leaf traits
@@ -313,23 +337,23 @@ p_pigments<-plot_grid(p_Cab_Date,p_Car_Date,
   theme(plot.margin = margin(0,0,0,0),
         panel.spacing = unit(0,"lines"))
 
-
-p_leaf_traits<-plot_grid(p_SLA_Date,p_width_Date,
-                ncol = 2,
-                align = "hv",
-                labels = c("(A)","(B)")
-                # rel_heights = c(0.19,0.19,0.19,0.22,0.2)
-                )+
-  theme(plot.margin = margin(0,0,0,0),
-    panel.spacing = unit(0,"lines"))
+#only save the SLA data
+# p_leaf_traits<-plot_grid(p_SLA_Date,p_width_Date,
+#                 ncol = 2,
+#                 align = "hv",
+#                 labels = c("(A)","(B)")
+#                 # rel_heights = c(0.19,0.19,0.19,0.22,0.2)
+#                 )+
+#   theme(plot.margin = margin(0,0,0,0),
+#     panel.spacing = unit(0,"lines"))
 
 ##save the ggplot plots:
 save.path<-"./manuscript/comprehensive_plot/"
 ggsave(paste0(save.path,"Fig2_supp2_pigments.png"),
        p_pigments,width = 20,height=11)
 #
-ggsave(paste0(save.path,"Fig2_supp2_traits.png"),
-       p_leaf_traits,width = 16,height=11)
+ggsave(paste0(save.path,"Fig2_supp2_traits_SLA.png"),
+       p_SLA_Date,width = 10,height=8)
 
 
 

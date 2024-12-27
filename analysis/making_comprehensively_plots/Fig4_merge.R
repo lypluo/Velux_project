@@ -28,5 +28,5 @@ p_merge2<-plot_grid(p_merge1,
                     ncol=2,rel_widths = c(0.6,0.4))
 ##save the plot:
 save.path<-"./manuscript/comprehensive_plot/"
-ggsave(paste0(save.path,"Fig4.png"),p_merge2,width = 33,height=16)
+ggsave(paste0(save.path,"Fig4.png"),p_merge2,width = 30,height=15)
 
