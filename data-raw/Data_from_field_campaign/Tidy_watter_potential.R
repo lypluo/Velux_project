@@ -18,6 +18,9 @@ Tha.path<-paste0(base_path,"Tha_Data/")
 #For Davos:
 df.Dav<-c()
 table.list<-list.files(paste0(Dav.path,"WaterPotential/"))
+#select the tidied files-->with waterpotential.xlsx
+table.list<-table.list[grep("Waterpotential",table.list)]
+#for water potential at needle and twig
 for (i in 1:length(table.list)) {
   #at this stage, using the water potential without dark adapted:
   Dav_temp<-read_xlsx(paste0(Dav.path,"WaterPotential/",table.list[i]),sheet = "WP1",skip = 3)
@@ -28,6 +31,18 @@ for (i in 1:length(table.list)) {
   }
   df.Dav<-rbind(df.Dav,Dav_temp)
 }
+#for water potential measured with dark adapted(represent trunk water potential)
+df.Dav_trunk<-c()
+for (i in 1:length(table.list)) {
+  #at this stage, using the water potential without dark adapted:
+  Dav_temp<-read_xlsx(paste0(Dav.path,"WaterPotential/",table.list[i]),sheet = "WP2",skip = 5)
+  Dav_temp<-Dav_temp %>%
+    select(`Branch ID`,Height,Twig)%>%
+    mutate(Trunk=Twig, Twig=NULL)
+  
+  df.Dav_trunk<-rbind(df.Dav_trunk,Dav_temp)
+}
+
 
 #For Tharandt:
 df.Tha<-c()
@@ -48,10 +63,13 @@ for (i in 1:length(table.list)) {
 #
 df.WaterP<-rbind(df.Dav,df.Tha)
 df.WaterP<-as.data.frame(df.WaterP)
-
+#merge the Davos trunk water potential 
+df.WaterP_trunk<-as.data.frame(df.Dav_trunk)
 #save the data:
-save.path<-"./data/"
+save.path<-"./data/Water_Potential/"
 save(df.WaterP,file = paste0(save.path,"WaterPotential.data.RDA"))
+save(df.WaterP_trunk,
+     file = paste0(save.path,"WaterPotential_Trunk_Davos.data.RDA"))
 
 
 
