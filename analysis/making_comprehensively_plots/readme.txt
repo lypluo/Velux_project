@@ -1,1 +1,0 @@
-Try to merge the several plots(panels) together.
