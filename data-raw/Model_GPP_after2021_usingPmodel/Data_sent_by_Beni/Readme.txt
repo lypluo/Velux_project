@@ -1,0 +1,2 @@
+1.rsofun_drivers_CH-Dav_DE-Tha.RDA: the datasets that Beni helped to prepare for the driver datasets for CH-Dav and DE-Tha
+2. Instructions about how to use the P-model: https://geco-bern.github.io/rsofun/articles/pmodel_use.html
