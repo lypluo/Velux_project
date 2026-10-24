@@ -78,12 +78,12 @@ Deter_greenup<-function(df,pos_max){
 #after checking the data(data avaiablity, data quality) in all the sites(47 sites)-->at the end, I selecting 39 sites at end:
 
 sep_data_indiffY_sepMismatch<-function(ddf,degf,Clim,PFT,site_name,avai_years){
-  # ddf<-df.merge
+  # ddf<-df.merge[df.merge$sitename=="CH-Dav",]
   # degf<-0.05  #degree of freedom for the spline smooth
   # Clim<-"Dfc"
   # PFT<-"ENF"
   # site_name<-"CH-Dav"
-  # avai_years<-c(1997:2020)
+  # avai_years<-c(1997:2018)
 
   ##remember add dplyr:: for instance as sometimes two same name functions might conflict with each other
   df<-ddf %>%
@@ -314,7 +314,8 @@ sep_data_indiffY_sepMismatch<-function(ddf,degf,Clim,PFT,site_name,avai_years){
       theme(legend.position = c(0.15,0.9),legend.background = element_blank())
 
     ## merge the plot
-    ifelse(i==1,gg_plot<-gg_plot+theme(),gg_plot<-gg_plot+theme(legend.position = "none"))
+    # ifelse(i!=1,gg_plot<-gg_plot+theme(legend.position = "none"),
+    #        gg_plot<-gg_plot+theme())
     # plot(gg_plot)
     p_diffYears[[i]]<-gg_plot
   }
