@@ -85,9 +85,9 @@ df.merge_A<-df.merge_A %>%
 #------------------
 #for A:
 plot_meansd_fun<-function(df,var_name,legend.xy,arrow.xy,arrow.flag){
-  # df<-df.merge_Amax
-  # var_name<-"k_sat"
-  # legend.xy<-c(0.1,0.9)
+  # df<-df.merge_A
+  # var_name<-"A"
+  # legend.xy<-c(0.1,0.2)
   # arrow.xy<-data.frame(x=84,xend=84,y=-0.1,yend=-0.15)
   # arrow.flag<-FALSE
   
@@ -98,14 +98,14 @@ plot_meansd_fun<-function(df,var_name,legend.xy,arrow.xy,arrow.flag){
     dplyr::select(sitename,CampaignNum,Date,Position,y)%>%
     ##summary the data
     group_by(sitename,Date,CampaignNum,Position)%>%
-    summarise(y_mean=mean(y,na.rm = T),
+    dplyr::summarise(y_mean=mean(y,na.rm = T),
               y_sd=sd(y,na.rm=T))
   df_DAV<-df%>%
     filter(sitename=="CH-Dav")%>%
     dplyr::select(sitename,CampaignNum,Date,Position,y)%>%
     ##summary the data
     group_by(sitename,Date,CampaignNum,Position)%>%
-    summarise(y_mean=mean(y,na.rm = T),
+    dplyr::summarise(y_mean=mean(y,na.rm = T),
               y_sd=sd(y,na.rm=T))
   #using data from Dav - Tha
   df_retidy<-left_join(df_THA,df_DAV,by=c("CampaignNum","Position"))%>%
@@ -135,7 +135,7 @@ plot_meansd_fun<-function(df,var_name,legend.xy,arrow.xy,arrow.flag){
     geom_hline(yintercept = 0,lty=2)+
     ##separate the campaigns-adding in Jan, 2024
     # geom_vline(xintercept = c(2.5,4.5,6.5,8.5,10.5),lty=2)+
-    theme_light()+
+    theme_classic()+
     theme(axis.text = element_text(size=16),
           axis.title = element_text(size=20),
           # axis.text.x = element_text(angle = 35,hjust = 1),
@@ -186,7 +186,7 @@ plot_point_fun<-function(df,var_name,legend.xy,arrow.xy,arrow.flag){
     #   # x = expression("Irradiance (" * mu * mol ~ m^{-2} ~ s^{-1} * ")"),
     #   y = expression(A[max] ~ "(" * mu * mol ~ m^{-2} ~ s^{-1} * ")")
     # )
-    theme_bw()+
+    theme_classic()+
     theme(axis.text = element_text(size=16),
           axis.title = element_text(size=20),
           legend.text = element_text(size=16),
@@ -213,7 +213,7 @@ plot_point_fun<-function(df,var_name,legend.xy,arrow.xy,arrow.flag){
 library(ggforce) #-->draw circle in the plot
 #1) A:
 p_A_Date<-plot_meansd_fun(df.merge_A,"A",c(0.1,0.2),
-                          data.frame(x=84,xend=84,y=0,yend=-2),
+                          data.frame(x=84,xend=84,y=0,yend=-1),
                           TRUE)+
   labs(
     # x = expression("Irradiance (" * mu * mol ~ m^{-2} ~ s^{-1} * ")"),
@@ -223,13 +223,13 @@ p_A_Date<-plot_meansd_fun(df.merge_A,"A",c(0.1,0.2),
 #2) Amax:
 p_Amax_Date<-plot_point_fun(df.merge_Amax,"k_sat",c(0.85,0.4),
                             data.frame(x=yday(as.Date("2023-03-27")),
-                                       xend=yday(as.Date("2023-03-27")),y=3,yend=1),
+                                       xend=yday(as.Date("2023-03-27")),y=2,yend=0.5),
                             TRUE)+
   labs(
     # x = expression("Irradiance (" * mu * mol ~ m^{-2} ~ s^{-1} * ")"),
     y = expression(A[max] ~ "(" * mu * mol ~ m^{-2} ~ s^{-1} * ")")
   )+
-  geom_circle(aes(x0=yday(as.Date("2023-07-14")),y0=9,r=2),
+  geom_circle(aes(x0=yday(as.Date("2023-07-14")),y0=4.5,r=1.5),
               size=1.1,color="black")
 
 #-------------------------

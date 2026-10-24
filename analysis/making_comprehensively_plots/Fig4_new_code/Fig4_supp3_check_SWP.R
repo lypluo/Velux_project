@@ -47,11 +47,11 @@ p1<-df.Dav_plot %>%
   # addding date: "2023-03-27"
   geom_vline(xintercept = as.POSIXct("2023-03-27"),col="black")+
   annotate(geom="text",x=as.POSIXct("2023-03-27")+50*3600*24,y=-50,
-           label="Mar,27",col="black",size=6)+
+           label="Mar, 27",col="black",size=6)+
   ylab("CH-Dav SWP (kPa)")+
   xlab("")+
   labs(color ="Depth")+
-  theme_light()+
+  theme_classic()+
   theme(legend.text = element_text(size = 14),
         legend.title = element_text(size=18),
         legend.background = element_blank(),
@@ -64,12 +64,12 @@ p1<-df.Dav_plot %>%
 df.Dav_plot_agg<-df.Dav_plot %>%
   mutate(DoY=yday(Date))%>%
   group_by(DoY,Depth)%>%
-  summarise(SWP=mean(SWP,na.rm = T),
+  dplyr::summarise(SWP=mean(SWP,na.rm = T),
             SWP_sd=sd(SWP,na.rm=T))
 p2<-df.Dav_plot_agg %>%
   ggplot(aes(x=DoY,y=SWP,col=Depth))+
   geom_point()+
-  geom_smooth(span=0.3)+
+  geom_smooth(span=0.15)+
   #adding at Mar, 2025: SWP-->fiedl capacity
   geom_hline(yintercept = -33,lty=2,size=1.1)+
   scale_color_manual(values = c(
@@ -79,11 +79,11 @@ p2<-df.Dav_plot_agg %>%
   # addding date: "2023-03-27"
   geom_vline(xintercept = 86,col="black")+
   annotate(geom="text",x=100,y=-30,
-           label="Mar,27",col="black",size=6)+
-  ylab("CH-Dav SWP(KPa)")+
+           label="Mar, 27",col="black",size=6)+
+  ylab("CH-Dav SWP (KPa)")+
   xlab("DOY (2020-2023)")+
   # annotate(geom = "text",x=20,y=4,label="CH-Dav",size=6)+
-  theme_light()+
+  theme_classic()+
   theme(legend.text = element_text(size = 14),
         legend.title = element_text(size=18),
         legend.background = element_blank(),
@@ -103,14 +103,14 @@ df.Tha_plot<-df.SWP_Tha %>%
 df.Tha_plot_agg<-df.Tha_plot %>%
   mutate(DoY=yday(Date))%>%
   group_by(DoY,Depth)%>%
-  summarise(SWP=mean(SWP,na.rm = T),
+  dplyr::summarise(SWP=mean(SWP,na.rm = T),
             SWP_sd=sd(SWP,na.rm=T))
 #
 Tha_cols<-viridis::viridis(5,option = "D",direction = -1)
 p3<-df.Tha_plot_agg %>%
   ggplot(aes(x=DoY,y=SWP,col=Depth))+
   geom_point()+
-  geom_smooth(span=0.3)+
+  geom_smooth(span=0.15)+
   #adding at Mar, 2025: SWP-->fiedl capacity
   geom_hline(yintercept = -33,lty=2,size=1.1)+
   scale_color_manual(values = c(
@@ -123,10 +123,10 @@ p3<-df.Tha_plot_agg %>%
   # geom_vline(xintercept = 86,col="black")+
   # annotate(geom="text",x=110,y=-50,
   #          label="Mar,27",col="black",size=6)+
-  ylab("DE-Tha SWP(KPa)")+
+  ylab("DE-Tha SWP (KPa)")+
   xlab("DOY (1997-2014)")+
   # annotate(geom = "text",x=20,y=4,label="CH-Tha",size=6)+
-  theme_light()+
+  theme_classic()+
   theme(legend.text = element_text(size = 14),
         legend.title = element_text(size=18),
         legend.background = element_blank(),
@@ -149,21 +149,21 @@ rect.coord_isevent=data.frame(x1=Dav_pheno[,1]-60,
                               y2=Inf)
 ##. for DSPR period for CH-Dav:
 p_2_new<-p2+
+  # geom_rect(data=rect.coord_isevent,inherit.aes = FALSE,
+  #           mapping=aes(xmin=x1, xmax=x2, ymin=y1, ymax=y2), fill="blue",alpha=0.3)+
   geom_rect(data=rect.coord_isevent,inherit.aes = FALSE,
-            mapping=aes(xmin=x1, xmax=x2, ymin=y1, ymax=y2), fill="blue",alpha=0.3)+
-  geom_rect(data=rect.coord_isevent,inherit.aes = FALSE,
-            mapping=aes(xmin=x1, xmax=x3, ymin=y1, ymax=y2), fill="blue",alpha=0.1)+
+            mapping=aes(xmin=x2, xmax=x3, ymin=y1, ymax=y2), fill="blue",alpha=0.1)+
   geom_vline(xintercept=as.numeric(Dav_pheno[,1]),col="forestgreen",size=1.1)+
-  annotate(geom = "text",x=as.numeric(Dav_pheno[,1])+10,y=-0.5,label="sos",col="forestgreen",size=6)
+  annotate(geom = "text",x=as.numeric(Dav_pheno[,1])+10,y=-0.5,label="sos",col="forestgreen",size=7)
 
 ##. for DSPR period for DE-Tha:
 p_3_new<-p3+
+  # geom_rect(data=rect.coord_isevent,inherit.aes = FALSE,
+  #           mapping=aes(xmin=x1, xmax=x2, ymin=y1, ymax=y2), fill="blue",alpha=0.3)+
   geom_rect(data=rect.coord_isevent,inherit.aes = FALSE,
-            mapping=aes(xmin=x1, xmax=x2, ymin=y1, ymax=y2), fill="blue",alpha=0.3)+
-  geom_rect(data=rect.coord_isevent,inherit.aes = FALSE,
-            mapping=aes(xmin=x1, xmax=x3, ymin=y1, ymax=y2), fill="blue",alpha=0.1)+
+            mapping=aes(xmin=x2, xmax=x3, ymin=y1, ymax=y2), fill="blue",alpha=0.1)+
   geom_vline(xintercept=as.numeric(Dav_pheno[,1]),col="forestgreen",size=1.1)+
-  annotate(geom = "text",x=as.numeric(Dav_pheno[,1])+10,y=-0.5,label="sos",col="forestgreen",size=6)
+  annotate(geom = "text",x=as.numeric(Dav_pheno[,1])+10,y=-0.5,label="sos",col="forestgreen",size=7)
 
 #---------
 #Merge the plots

@@ -55,7 +55,7 @@ plot_function<-function(tiff.path,VI_name,VI_scale){
       scale_fill_viridis_c(option = "D") +
       coord_fixed()+
       labs(fill=VI_name)+
-      theme_light()+
+      theme_classic()+
       theme(legend.text = element_text(size = 26),
             legend.title = element_blank(),
             legend.background = element_blank(),
@@ -136,28 +136,35 @@ p_Crown_PRI<-plot_function(load.path,"PRI","Crown")
 #----------------
 #For PRI
 #----------------
-##Plot-A: merge Landscape+Crown PRI(Campaign 5 as an example)
-p_PRI_C5_Landscape<-p_Landscape_PRI$C5_PRI_Landscape+
-  scale_fill_gradientn(colors = c(
-    "#440154","#482878","#3E4B8B","#31688E","#26828E",
-    "#1F9B77","#5CDB5A","#B8DE29", "#FDE725"),
-                       limits=c(-0.2,0.01))+
-  annotate(geom = "text",x=2784400,y=1187640,label="C5-PRI",size=10)+
+##Plot-A: merge Landscape+Crown PRI(Campaign 3 as an example)
+my_colors<-colorRampPalette(colors = c(
+  "#440154","#482878","#3E4B8B","#31688E","#26828E",
+  "#1F9B77","#5CDB5A","#B8DE29", "#FDE725"))(30)
+p_PRI_C3_Landscape<-p_Landscape_PRI$C3_PRI_Landscape+
+  # scale_fill_gradientn(colors = c(
+  #   "#440154","#482878","#3E4B8B","#31688E","#26828E",
+  #    "#1F9B77","#5CDB5A","#B8DE29","#FDE725"),
+  #                      limits=c(-0.45,0.2))+
+  scale_fill_gradientn(colours = my_colors,
+                       limits=c(-0.55,0.05))+
+  annotate(geom = "text",x=2784400,y=1187640,label="2023-C3-PRI",size=10)+
   theme(axis.title = element_blank())
-p_PRI_C5_Crown<-p_Crown_PRI$C5_PRI_Crown+
+p_PRI_C3_Crown<-p_Crown_PRI$C3_PRI_Crown+
   # theme(legend.position = c(0.86,0.3))+
-  scale_fill_gradientn(colors = c(
-    "#440154","#482878","#3E4B8B","#31688E","#26828E",
-    "#1F9B77","#5CDB5A","#B8DE29", "#FDE725"),
-    limits=c(-0.2,0.01))+
-  theme_light()+
+  # scale_fill_gradientn(colors = c(
+  #   "#440154","#482878","#3E4B8B","#31688E","#26828E",
+  #   "#1F9B77","#5CDB5A","#B8DE29", "#FDE725"),
+  #   limits=c(-0.2,0.01))+
+  scale_fill_gradientn(colours = my_colors,
+                       limits=c(-0.55,0.05))+
+  theme_classic()+
   theme(legend.position = "none",
         axis.title = element_blank(),
         axis.ticks = element_blank(),
         axis.text = element_blank())
 #insert crown plot into landscape as insert plot
-p_merge_image_PRI<-p_PRI_C5_Landscape +
-  inset_element(p_PRI_C5_Crown,left = 0.72,right =0.99,
+p_merge_image_PRI<-p_PRI_C3_Landscape +
+  inset_element(p_PRI_C3_Crown,left = 0.72,right =0.99,
                 bottom = 0.72,top=0.99)
 # p_merge_image_PRI<-plot_grid(p_merge_image_PRI,
 #                 labels = c("(c)"),label_x = 0,label_y=1,
@@ -166,28 +173,32 @@ p_merge_image_PRI<-p_PRI_C5_Landscape +
 #----------------
 #For CCI
 #----------------
-##Plot-A: merge Landscape+Crown PRI(Campaign 5 as an example)
-p_CCI_C5_Landscape<-p_Landscape_CCI$C5_CCI_Landscape+
-  scale_fill_gradientn(colors = c(
-    "#440154","#482878","#3E4B8B","#31688E","#26828E",
-    "#1F9B77","#5CDB5A","#B8DE29", "#FDE725"),
-    limits=c(-0.2,0.2))+
-  annotate(geom = "text",x=2784400,y=1187640,label="C5-CCI",size=10)+
+##Plot-A: merge Landscape+Crown PRI(Campaign 3 as an example)
+p_CCI_C3_Landscape<-p_Landscape_CCI$C3_CCI_Landscape+
+  # scale_fill_gradientn(colors = c(
+  #   "#440154","#482878","#3E4B8B","#31688E","#26828E",
+  #   "#1F9B77","#5CDB5A","#B8DE29", "#FDE725"),
+  #   limits=c(-0.2,0.2))+
+  scale_fill_gradientn(colours = my_colors,
+                       limits=c(-0.2,0.2))+
+  annotate(geom = "text",x=2784400,y=1187640,label="2023-C3-CCI",size=10)+
   theme(axis.title = element_blank())
-p_CCI_C5_Crown<-p_Crown_CCI$C5_CCI_Crown+
+p_CCI_C3_Crown<-p_Crown_CCI$C3_CCI_Crown+
   # theme(legend.position = c(0.86,0.3))+
-  scale_fill_gradientn(colors = c(
-    "#440154","#482878","#3E4B8B","#31688E","#26828E",
-    "#1F9B77","#5CDB5A","#B8DE29", "#FDE725"),
-    limits=c(-0.2,0.2))+
-  theme_light()+
+  # scale_fill_gradientn(colors = c(
+  #   "#440154","#482878","#3E4B8B","#31688E","#26828E",
+  #   "#1F9B77","#5CDB5A","#B8DE29", "#FDE725"),
+  #   limits=c(-0.2,0.2))+
+  scale_fill_gradientn(colours = my_colors,
+                       limits=c(-0.2,0.2))+
+  theme_classic()+
   theme(legend.position = "none",
         axis.title = element_blank(),
         axis.ticks = element_blank(),
         axis.text = element_blank())
 #insert crown plot into landscape as insert plot
-p_merge_image_CCI<-p_CCI_C5_Landscape +
-  inset_element(p_CCI_C5_Crown,left = 0.72,right =0.99,
+p_merge_image_CCI<-p_CCI_C3_Landscape +
+  inset_element(p_CCI_C3_Crown,left = 0.72,right =0.99,
                 bottom = 0.72,top=0.99)
 # p_merge_image_CCI<-plot_grid(p_merge_image_CCI,
 #                 labels = c("(c)"),label_x = 0,label_y=1,
@@ -196,28 +207,32 @@ p_merge_image_CCI<-p_CCI_C5_Landscape +
 #----------------
 #For NDVI
 #----------------
-#For Plot-A:merge Landscape+Crown NDVI(Campaign 5 as an example)
-p_NDVI_C5_Landscape<-p_Landscape_NDVI$C5_NDVI_Landscape+
-  scale_fill_gradientn(colors = c(
-    "#440154","#482878","#3E4B8B","#31688E","#26828E",
-    "#1F9B77","#5CDB5A","#B8DE29", "#FDE725"),
-    limits=c(0,1))+
-  annotate(geom = "text",x=2784400,y=1187640,label="C5-NDVI",size=10)+
+#For Plot-A:merge Landscape+Crown NDVI(Campaign 3 as an example)
+p_NDVI_C3_Landscape<-p_Landscape_NDVI$C3_NDVI_Landscape+
+  # scale_fill_gradientn(colors = c(
+  #   "#440154","#482878","#3E4B8B","#31688E","#26828E",
+  #   "#1F9B77","#5CDB5A","#B8DE29", "#FDE725"),
+  #   limits=c(0,1))+
+  scale_fill_gradientn(colours = my_colors,
+                       limits=c(0,1))+
+  annotate(geom = "text",x=2784410,y=1187640,label="2023-C3-NDVI",size=10)+
   theme(axis.title = element_blank())
-p_NDVI_C5_Crown<-p_Crown_NDVI$C5_NDVI_Crown+
+p_NDVI_C3_Crown<-p_Crown_NDVI$C3_NDVI_Crown+
   # theme(legend.position = c(0.86,0.3))+
-  scale_fill_gradientn(colors = c(
-    "#440154","#482878","#3E4B8B","#31688E","#26828E",
-    "#1F9B77","#5CDB5A","#B8DE29", "#FDE725"),
-    limits=c(0,1))+
-  theme_light()+
+  # scale_fill_gradientn(colors = c(
+  #   "#440154","#482878","#3E4B8B","#31688E","#26828E",
+  #   "#1F9B77","#5CDB5A","#B8DE29", "#FDE725"),
+  #   limits=c(0,1))+
+  scale_fill_gradientn(colours = my_colors,
+                       limits=c(0,1))+
+  theme_classic()+
   theme(legend.position = "none",
         axis.title = element_blank(),
         axis.ticks = element_blank(),
         axis.text = element_blank())
 #insert crown plot into landscape as insert plot
-p_merge_image_NDVI<-p_NDVI_C5_Landscape +
-  inset_element(p_NDVI_C5_Crown,left = 0.72,right =0.99,
+p_merge_image_NDVI<-p_NDVI_C3_Landscape +
+  inset_element(p_NDVI_C3_Crown,left = 0.72,right =0.99,
                 bottom = 0.72,top=0.99)
 
 ##Plot-B: the data distribution of VI from C1-C6:
@@ -268,7 +283,7 @@ plot_boxplot<-function(tiff.path,VI_name,VI_scale){
                   alpha = 0.5) +
       geom_boxplot()+
       # ylab(expression("Drones' "[Crown]))+
-    theme_light()+
+    theme_classic()+
     theme(axis.text = element_text(size=22),
             axis.title = element_text(size=26),
             legend.text = element_text(size=22)
@@ -281,7 +296,7 @@ plot_boxplot<-function(tiff.path,VI_name,VI_scale){
     geom_boxplot()+
     # ylab(paste0(VI_scale," ",VI_name))+
     # ylab(expression(paste0("Drones'",VI_name)[Eco]))+
-    theme_light()+
+    theme_classic()+
     theme(axis.text = element_text(size=22),
           axis.title = element_text(size=26),
           legend.text = element_text(size=22)
@@ -294,11 +309,14 @@ plot_boxplot<-function(tiff.path,VI_name,VI_scale){
 ### For Landscape VI
 load.path<-"D:/EE_WSL/IMPACT_project/Drones_data/ArcGIS_processing/Davos_test_Project/exported_tiff/"
 p_Landscape_NDVI_boxplot<-plot_boxplot(load.path,"NDVI","Landscape")+
-  ylab(expression("Drones' NDVI"[Eco]))
+  ylab(expression("Drones' NDVI"[Eco]))+
+  xlab("2023-Campaign")
 p_Landscape_PRI_boxplot<-plot_boxplot(load.path,"PRI","Landscape")+
-  ylab(expression("Drones' PRI"[Eco]))
+  ylab(expression("Drones' PRI"[Eco]))+
+  xlab("2023-Campaign")
 p_Landscape_CCI_boxplot<-plot_boxplot(load.path,"CCI","Landscape")+
-  ylab(expression("Drones' CCI"[Eco]))
+  ylab(expression("Drones' CCI"[Eco]))+
+  xlab("2023-Campaign")
 
 ### For Crown VI
 load.path<-"D:/EE_WSL/IMPACT_project/Drones_data/ArcGIS_processing/Davos_test_Project/exported_tiff/Crowns/"
@@ -310,6 +328,7 @@ p_crown_PRI_boxplot<-plot_boxplot(load.path,"PRI","Crown")+
 
 p_crown_CCI_boxplot<-plot_boxplot(load.path,"CCI","Crown")+
   ylab(expression("Drones' CCI"[Sel-Trees]))
+
 
 ###add additional data:Feb,2025-->add the averged PRI and NDVI for each tree
 load.path<-"D:/EE_WSL/IMPACT_project/Drones_data/ArcGIS_processing/Davos_test_Project/"
@@ -360,7 +379,7 @@ p_crown_PRI_boxplot<-p_crown_PRI_boxplot+
 
 p_PRI_boxplot<-plot_grid(p_crown_PRI_boxplot,p_Landscape_PRI_boxplot,
           # labels = c("(d)","(e)"),
-          align = "hv",
+          align = "hv",label_size = 22,
           nrow=2)
 #---NDVI-----
 #put the crown PRI as an insert plot
@@ -370,7 +389,7 @@ p_crown_NDVI_boxplot<-p_crown_NDVI_boxplot+
 
 p_NDVI_boxplot<-plot_grid(p_crown_NDVI_boxplot,p_Landscape_NDVI_boxplot,
                          # labels = c("(d)","(e)"),
-                         align = "hv",
+                         align = "hv",label_size = 22,
                          nrow=2)
 #---CCI-----
 #put the crown PRI as an insert plot
@@ -381,7 +400,7 @@ p_crown_CCI_boxplot<-p_crown_CCI_boxplot+
 p_CCI_boxplot<-plot_grid(p_crown_CCI_boxplot,
                          p_Landscape_CCI_boxplot,
                           # labels = c("(d)","(e)"),
-                         align = "hv",
+                         align = "hv",label_size = 22,
                           nrow=2)
 
 #-------------------

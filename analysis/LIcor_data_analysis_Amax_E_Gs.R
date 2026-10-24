@@ -295,7 +295,9 @@ df.physio<-df.Amax.merge %>%
   #https://nph.onlinelibrary.wiley.com/doi/full/10.1111/nph.18649
   #E:unit-->mol m-2 s-1; VPDleaf:kPa; Pa:air presssure-->kPa
   #Gs: mol m-2 s-1
-  mutate(Gs=E*VPDleaf/Pa)%>%
+  # mutate(Gs=E*VPDleaf/Pa)%>%
+  #update in Nov,2025: Pa-->unit from Pa to kPa
+  mutate(Gs=E*VPDleaf/c(Pa/1000))%>%
   select(sitename,ID,CampaignNum,Position,A,Gs,E,gsw,gtc)%>%
   filter(Gs>0 & E>0)
 ##save the data:
@@ -339,7 +341,7 @@ plot_physio<-function(df,plot_var){
   #
   if(plot_var=="gsw"){
     p_plot<-p_plot+
-      ylab(expression(Gsw ~ "(" * mol ~ m^{-2} ~ s^{-1} * ")"))
+      ylab(expression(gsw ~ "(" * mol ~ m^{-2} ~ s^{-1} * ")"))
   }
  return(p_plot) 
 }
@@ -347,6 +349,8 @@ plot_physio<-function(df,plot_var){
 plot_A<-plot_physio(df.physio,"A")
 plot_E<-plot_physio(df.physio,"E")
 plot_Gs<-plot_physio(df.physio,"Gs")
+#
+plot_gsw<-plot_physio(df.physio,"gsw")
 
 #save the plots:
 ggsave(plot_E,filename = paste("./manuscript/transpiration_campaigns.png"),

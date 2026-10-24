@@ -41,16 +41,26 @@ df.NPQ.merge<-df.NPQ.merge %>%
          #PhiPS2-->ΦPSII (also known as ΔF/Fm') is the fraction of absorbed PSII photons that are used in photochemistry
          #qN,qP-->Two competing processes that quench (decrease) the level of chlorophyll fluorescence
          #in the leaf are referred to as photochemical (qP) and non-photochemical (qN) quenching.
-         NPQ,PS2.1,PhiPS2,qL,qN,qN_Fo,qP,qP_Fo)%>%
+         NPQ,PS2.1,PhiPS2,qL,qN,qN_Fo,qP,qP_Fo,
+         #update: Fs:flourence under steady state (light-adpated);
+         #Fm:maximum flourence under steady state (dark-adapted) 
+         #Fm'(In Licor6800-->Fm.)
+         Fs,Fm,Fm.
+         )%>%
   #filter the data--replace "0" to NA
-  mutate(across(Fv:qP_Fo),~na_if(.x,0))%>%
+  mutate(across(Fv:Fm.),~na_if(.x,0))%>%
   # mutate(across(c(Fv..Fm.,NPQ)),~na_if(.x,x<=0.01))%>%
   mutate(Fv..Fm.=ifelse(Fv..Fm.<=0.01,NA,Fv..Fm.),
          NPQ=ifelse(NPQ<=0.01,NA,NPQ),
          PhiPS2=ifelse(PhiPS2<=0.01,NA,PhiPS2)
          )%>%
   #additionally add parameters:ratio between qN and qP(qN/QP)
-  mutate(qN.qP=qN/qP,qN_Fo.qP_Fo=qN_Fo/qP_Fo)
+  mutate(qN.qP=qN/qP,qN_Fo.qP_Fo=qN_Fo/qP_Fo)%>%
+  #update:Jan,2026-->ref Hendrickson et al., 2004:https://link.springer.com/article/10.1023/B:PRES.0000040446.87305.f4#citeas
+  #calculate the ΦNPQ (dynamic NPQ), and Φf,D(sustained NPQ)
+  mutate(Phi_NPQ = c(Fs/Fm.) - c(Fs/Fm),
+         Phi_fD= Fs/Fm
+         )
 #save the data:
 save(df.NPQ.merge,file = paste0("./data/LIcor/df.NPQ.cleaned.RDA"))
 
@@ -128,6 +138,11 @@ plot_qN_Fo.qP_Fo<-plot_physio(df.NPQ.merge,"qN_Fo.qP_Fo")+
   ylab(expression("qN_Fo/qP_Fo"))+
   #there is outlier in the measurements-->hence limit the y range below 10
   ylim(0,10)
+##update in Jan,2026: check ΦNPQ (dynamic NPQ), and Φf,D(sustained NPQ)
+plot_Phi_NPQ<-plot_physio(df.NPQ.merge,"Phi_NPQ")+
+  ylab(expression(Phi[NPQ]))
+plot_Phi_fD<-plot_physio(df.NPQ.merge,"Phi_fD")+
+  ylab(expression(Phi["f,D"]))
 
 #save the plots:
 library(cowplot)

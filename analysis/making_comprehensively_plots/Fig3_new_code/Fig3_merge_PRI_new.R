@@ -19,32 +19,38 @@ load(paste0(drones.path,"p_Drones_PRI_image.RDA"))
 #--------
 #merge the plot
 #-------
-p_merge_image_PRI <- p_merge_image_PRI + theme(plot.margin = margin(5, 5, 5, 5))
-p_PRI_boxplot <- p_PRI_boxplot + theme(plot.margin = margin(5, 5, 5, 5))
-p_merge1<-plot_grid(p_merge_image_PRI,p_PRI_boxplot,
-                    labels = c("(c)","(d)"),
-                    # label_x = 0.02,label_y = 0.98,
-                    label_size = 24,
-                    nrow=1,
-                    align="v"
-                    # axis="tblr",
-                    # greedy = FALSE
-                    # rel_widths = c(3,2)
-                    )
+###
 #
-p_PRI_Meteo <- p_PRI_Meteo + theme(plot.margin = margin(5, 5, 5, 5))
-p_crown_PRI <- p_crown_PRI + theme(plot.margin = margin(5, 5, 5, 5))
-p_merge2<-plot_grid(p_PRI_Meteo,
+p_leaf_spectra_PRI <- p_leaf_spectra_PRI 
+  # theme(plot.margin = margin(5, 5, 5, 5))
+p_crown_PRI <- p_crown_PRI 
+  # theme(plot.margin = margin(5, 5, 5, 5))
+p_merge1<-plot_grid(p_leaf_spectra_PRI,
                     p_crown_PRI,
-                    labels = c("(a)","(b)"),
-                    label_size = 24,
+                    labels = c("","(d)"),
+                    label_size = 20,
                     # label_x = -0.01,label_y = 1.05,
                     # axis="lr",
                     align="h",
                     ncol=1)
-p_merge3<-plot_grid(p_merge2,
-                    p_merge1,
-                    align="v",
+###
+p_merge_image_PRI <- p_merge_image_PRI 
+# + theme(plot.margin = margin(5, 5, 5, 5))
+p_PRI_boxplot <- p_PRI_boxplot 
+# + theme(plot.margin = margin(5, 5, 5, 5))
+p_merge2<-plot_grid(p_merge_image_PRI,p_PRI_boxplot,
+                    labels = c("(e)","(f)"),
+                    # label_x = 0.02,label_y = 0.98,
+                    label_size = 20,
+                    nrow=1,
+                    align="v"
+                    # axis="tblr",
+                    # greedy = FALSE
+                    )
+
+p_merge3<-plot_grid(p_merge1,
+                    p_merge2,
+                    align="hv",
                     ncol=1,
                     rel_heights = c(0.48,0.52)
                     )
@@ -54,7 +60,8 @@ save.path<-"./manuscript/comprehensive_plot/"
 #        p_merge1,width = 29,height=20,limitsize = FALSE)
 
 ggsave(paste0(save.path,"Fig3_new.png"),
-       p_merge3,width = 24,height=23)
+       p_merge3,width = 24,height=20.5)
        # p_merge3,width = 19.5,height=19.8)
+
 
 

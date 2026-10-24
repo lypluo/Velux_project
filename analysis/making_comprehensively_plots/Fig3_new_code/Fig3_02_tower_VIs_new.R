@@ -3,7 +3,7 @@
 ##################################
 library(dplyr)
 library(tidyverse)
-
+library(readxl)
 #----------
 #(1)load the data
 #----------
@@ -70,6 +70,10 @@ df.filter_max<-rbind(data.frame(df.filter_max_CH_Dav,"sitename"="CH-Dav"),
                      data.frame(df.filter_max_DE_Tha,"sitename"="DE-Tha"))
 df.all<-left_join(df.all%>%mutate(Date=as.Date(Date)),
                   df.filter_max%>%mutate(Date=as.Date(Date)),by=c("sitename","Date"))
+#save the data:
+file.path<-"./data/Tower_based_VIs/"
+save(df.all,file=paste0(file.path,"Twosites_VIs.RDA"))
+
 #test:
 # df.all.tt<-df.all[df.all$sitename=="DE-Tha",]
 # ggplot()+
@@ -78,17 +82,58 @@ df.all<-left_join(df.all%>%mutate(Date=as.Date(Date)),
 #----------
 #(2)plotting
 #----------
-plot_fun<-function(df,var_name){
+#using the snow data updated by Thomas in Mar, 2023:
+snow_data_path<-"D:/EE_WSL/IMPACT_project/data_collection/THA_Data/Other_data_from_collabrators/Snow_depth/"
+Tha_snow_depth<-read_excel(paste0(snow_data_path,"DE-Tha_snow.xlsx"),sheet = "snowdepth")
+Tha_snow_depth<-Tha_snow_depth %>%
+  mutate(sitename="DE-Tha")
+names(Tha_snow_depth)<-c("Date","D_SNOW","sitename")
+
+plot_fun<-function(df,var_name,Tha_snow){
   # df<-df.all
   # var_name<-"PRI_norm"
+  # Tha_snow<-Tha_snow_depth
 
   #
   df<-df%>%
     mutate(doy=yday(Date))
   df_sel<-df%>%
       dplyr::select(Date,var_name,paste0(var_name,".max.filtered"),sitename,doy)%>%
-      filter(Date>=as.Date("2023-01-01") & doy<=300)
+      dplyr::filter(Date>=as.Date("2023-01-01") & Date<=as.Date("2023-12-31"))%>%
+      filter(doy<=300)
   names(df_sel)<-c("Date","y","y.max.filtered","sitename","doy")
+  ##sig.test:
+  df_THA_stats<-df_sel%>%
+    filter(sitename=="DE-Tha")%>%
+    dplyr::select(sitename,Date,y)
+  df_DAV_stats<-df_sel%>%
+    filter(sitename=="CH-Dav")%>%
+    dplyr::select(sitename,Date,y)
+  #using data from Dav - Tha
+  df_THA_stats<-df_THA_stats[,-1];names(df_THA_stats)<-c("Date","y.x")
+  df_DAV_stats<-df_DAV_stats[,-1];names(df_DAV_stats)<-c("Date","y.y")
+  df_retidy_stats<-left_join(df_DAV_stats,df_THA_stats,by=c("Date"))%>%
+    mutate(diff_y=y.y - y.x,
+           diff_Date=Date)%>%
+    dplyr::select(diff_Date,diff_y)
+  
+  ##add sig.test:
+  sig_test<-c()
+  if(var_name %in% c("NDVI","PRI_norm")){
+  var_VIs<-as.numeric(unlist(as.data.frame(df_retidy_stats)%>%
+                               mutate(doy=yday(diff_Date))%>%
+                                 #select DOY<121--C1-C4
+                                 filter(doy<121)%>%dplyr::select(diff_y)))
+  var_VIs<-var_VIs[!is.na(var_VIs)]
+  norm_test_Lower<-shapiro.test(var_VIs)
+  
+  ifelse(norm_test_Lower$p.value>0.05,
+         sig.res<-t.test(var_Lower),sig.res<-wilcox.test(var_VIs))
+  sig_test<-list("sig_pvalue"=round(sig.res$p.value,2),
+                 "sig_n"=length(var_VIs))
+  }
+  print(sig_test)
+  
   ## in Tharand as the VIs are only avaiable from April, 2023-->try to use the data
   ## in 2024 to illustrate the VI variation in Tharandt
   df_Tha_add<-df %>%
@@ -96,7 +141,9 @@ plot_fun<-function(df,var_name){
     filter(sitename=="DE-Tha")%>%
     filter(Date>=as.Date("2024-01-01") & Date<=as.Date("2024-04-03"))%>%
     mutate(doy=yday(Date))
-  names(df_Tha_add)<-c("Date","y","y.max.filtered","sitename","doy")
+  #
+  df_Tha_add<-left_join(df_Tha_add,Tha_snow)
+  names(df_Tha_add)<-c("Date","y","y.max.filtered","sitename","doy","D_SNOW")
   df_Tha_add$pesudo_Date<-as.POSIXct(as.Date("2023-01-01")+yday(df_Tha_add$Date)-1)
   
   #plotting
@@ -109,10 +156,11 @@ plot_fun<-function(df,var_name){
     geom_line(aes(doy,y.max.filtered),data=df_sel[df_sel$sitename=="CH-Dav",],
               col="red",linewidth=1.1)+
     ##add additional data for Tharandt-->using 2024-01--2024-04 data-->using dashed line
-    geom_point(aes(x=doy,y=y,col=sitename),data=df_Tha_add)+
-    geom_line(aes(doy,y.max.filtered),data=df_Tha_add[df_Tha_add$sitename=="DE-Tha",],
-              col="orange",linewidth=1.1,lty=2)+
-    theme_light()+
+    #update in Jan,2026-->do not use this
+    # geom_point(aes(x=doy,y=y,col=sitename),data=df_Tha_add)+
+    # geom_line(aes(doy,y.max.filtered),data=df_Tha_add[df_Tha_add$sitename=="DE-Tha",],
+    #           col="orange",linewidth=1.1,lty=2)+
+    theme_classic()+
     ylim(-0.2,1)+
     ylab(var_name)+
     xlab("")+
@@ -120,23 +168,35 @@ plot_fun<-function(df,var_name){
           legend.title = element_blank(),
           legend.text = element_text(size = 22),
           legend.background = element_blank(),
-          axis.text = element_text(size=24),
-          axis.title = element_text(size=28)
+          axis.text = element_text(size=20),
+          axis.title = element_text(size=22)
     )
-  # if(var_name=="NDVI"){
+  if(var_name=="NDVI"){
+    p_plot<-p_plot+
+      ylim(-0.05,0.9)
+  }
   #
+  if(var_name=="PRI"){
+    p_plot<-p_plot+
+      ylim(-0.05,1.2)
+  }
   
+  ###adding snow:
     p_plot<-p_plot+
       #adding snowing period
-      geom_bar(aes(x=doy,y=D_SNOW/50),stat="identity",fill=adjustcolor("red",0.4),
+      geom_bar(aes(x=doy,y=D_SNOW/50),stat="identity",fill=adjustcolor("red",0.2),
                data = df %>% filter(sitename=="CH-Dav")%>%
                  filter(Date>=as.Date("2023-01-01") & doy<=300)%>%
                  filter(!is.na(D_SNOW) & D_SNOW>0))+
       #2023-DE-Tha
       geom_bar(aes(x=doy,y=D_SNOW/50),stat="identity",fill=adjustcolor("orange",0.6),
                data = df %>% filter(sitename=="DE-Tha")%>%
-                 filter(Date>=as.Date("2023-01-01")& doy<=300)%>%
+                 filter(Date>=as.Date("2023-04-03")& doy<=300)%>%
                  filter(!is.na(D_SNOW) & D_SNOW>0))+
+      #2024-DE-Tha
+      # geom_bar(aes(x=doy,y=D_SNOW/50),stat="identity",fill=adjustcolor("orange",0.6),
+      #          data = df_Tha_add %>%
+      #            filter(!is.na(D_SNOW) & D_SNOW>0))+
       #add second axix
       scale_y_continuous(
         limits = c(-0.05,1.2),
@@ -152,33 +212,23 @@ plot_fun<-function(df,var_name){
       # +
       # scale_fill_manual(values = c("CH-Dav"=adjustcolor("tomato",0.1),
       #                               "DE-Tha"=adjustcolor("cyan3",0.1)))
-  # }
-    #
-    if(var_name=="PRI"){
-    p_plot<-p_plot+
-      ylim(-0.05,1.2)
-    }
-    if(var_name=="NDVI"){
-      p_plot<-p_plot+
-        ylim(-0.05,0.9)
-    }
-    return(p_plot)
+      return(p_plot)
 }
 ##
-p_NDVI<-plot_fun(df.all,"NDVI")+
+p_NDVI<-plot_fun(df.all,"NDVI",Tha_snow_depth)+
   xlab("DOY (2023)")+
   ylab(expression("NDVI"[Crown]))
 # plot_fun(df.all,"PRI") # the absolute PRI in two sites are different-->hence
 # normalize it
-p_PRI<-plot_fun(df.all,"PRI_norm")+
+p_PRI<-plot_fun(df.all,"PRI_norm",Tha_snow_depth)+
   ylab(expression("Norm PRI"[Crown]))+
   # theme(legend.position = "none")+
   xlab("DOY (2023)")
-p_SIF<-plot_fun(df.all,"SIF_a_sfm")+
+p_SIF<-plot_fun(df.all,"SIF_a_sfm",Tha_snow_depth)+
   theme(legend.position = "none")+
   ylab(expression("SIF (mW m"^-2*"nm "^-1*sr^-1*")"))
 #further need to plot SIF/PAR-->the pattern does not look very clear
-p_SIF_over_PAR<-plot_fun(df.all,"SIF_over_PAR")+
+p_SIF_over_PAR<-plot_fun(df.all,"SIF_over_PAR",Tha_snow_depth)+
   theme(legend.position = "none")+
   ylab(expression("SIF/PAR (nm "^-1*")"))
 
@@ -222,6 +272,57 @@ p_crown_NDVI<-p_crown_NDVI+
   annotate(geom = "text",x=c(140),y=rep(-0.05),label=c("C5"),size=6)+
   annotate(geom = "text",x=c(196),y=rep(-0.05),label=c("C6"),size=6)
 
+##adding the DSPR period and sig. symbol
+Dav_pheno<-data.frame("sos10"=61,"sos25"=65,"peak"=180,"eos25"=296,"eos10"=322)
+Tha_pheno<-data.frame("sos10"=61,"sos25"=70,"peak"=177,"eos25"=285,"eos10"=312)
+
+#period:[sos-60,sos+60] is set to red
+#adding the sos
+#for CH-Dav
+rect.coord_isevent_Dav=data.frame("x1"=as.numeric(Dav_pheno[1])-60,
+                                  "x2"=as.numeric(Dav_pheno[1]),
+                                  "x3"=as.numeric(Dav_pheno[1]+60),
+                                  "y1"=-Inf,
+                                  "y2"=Inf)
+rect.coord_isevent_Tha=data.frame("x1"=as.numeric(Tha_pheno[1])-60,
+                                  "x2"=as.numeric(Tha_pheno[1]),
+                                  "x3"=as.numeric(Tha_pheno[1]+60),
+                                  "y1"=-Inf,
+                                  "y2"=Inf)
+plot_add_rectanges<-function(df.plot,rect.coord_isevent,x_text,y_text){
+  # df.plot<-p_Fv.Fm_Date_Dav
+  # rect.coord_isevent<-rect.coord_isevent_Dav
+  # x_text<-Dav_pheno[1]
+  # y_text<-0.4
+  
+  df_add<-df.plot+
+    # annotate("rect",xmin = rect.coord_isevent$x1,
+    #          xmax=rect.coord_isevent$x2,
+    #          ymin = -Inf, ymax = Inf,
+    #          fill="blue",alpha=0.3
+    #          )+
+    annotate("rect",xmin = rect.coord_isevent$x2,
+             xmax=rect.coord_isevent$x3,
+             ymin = -Inf, ymax = Inf,
+             fill="blue",alpha=0.1
+    )
+  # geom_vline(xintercept=as.numeric(x_text),col="forestgreen",size=1.1)+
+  # annotate(geom = "text",x=as.numeric(x_text)+10,y=y_text,label="sos",col="forestgreen",size=6)
+  
+  return(df_add)
+}
+
+#for DSPR period for pigments:
+p_crown_NDVI<-plot_add_rectanges(p_crown_NDVI,rect.coord_isevent_Dav,Dav_pheno[1],0.5)
+p_crown_PRI<-plot_add_rectanges(p_crown_PRI,rect.coord_isevent_Dav,Dav_pheno[1],0.5)
+
+##adding the sig. symbol:
+p_crown_NDVI<-p_crown_NDVI +
+  annotate("text",x=c(100),y=c(0.82),label=c("***"),
+           size=10)
+p_crown_PRI<-p_crown_PRI +
+  annotate("text",x=c(100),y=c(1.1),label=c("*"),
+           size=10)
 
 #save the plot
 save.path<-"./data/Comprehensive_plot_data/Fig3/"
