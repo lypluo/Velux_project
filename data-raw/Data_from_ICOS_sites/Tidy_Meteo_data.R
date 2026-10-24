@@ -47,7 +47,7 @@ df.Tha.daily[df.Tha.daily==-9999]<-NA
 df.Tha.more<-read.csv(paste0(base.path,"Meteo_download/ICOSETC_DE-Tha_METEO_L2/",
                              "ICOSETC_DE-Tha_METEO_L2.csv"))
 df.Tha.snow_and_P<-df.Tha.more %>%
-  dplyr::select(TIMESTAMP_START,TIMESTAMP_END,D_SNOW,P)%>%
+  dplyr::select(TIMESTAMP_START,TIMESTAMP_END,D_SNOW,P,RH)%>%
   mutate(TIMESTAMP_START=ymd_hm(TIMESTAMP_START),
          TIMESTAMP_END=ymd_hm(TIMESTAMP_END),
          Date=as.Date(TIMESTAMP_END))
@@ -57,16 +57,20 @@ df.Tha.snow_and_P[df.Tha.snow_and_P==-9999]<-NA
 df.Tha.snow_and_P$D_SNOW[df.Tha.snow_and_P$D_SNOW<0]=NA
 
 df.Tha.snow_and_P.daily<-df.Tha.snow_and_P %>%
-  ##addtional filter:set snow depth data to NA if the D_SNOW>0 in summer(June-Sep)
+  ##addtional filter:set snow depth data to NA if the D_SNOW>0 
+  ##in growing season(May-Oct)
   mutate(Month=month(Date),
-         D_SNOW=ifelse(Month>=6 & Month<=9,NA,D_SNOW))%>%
+         D_SNOW=ifelse(Month>=5 & Month<=10,NA,D_SNOW))%>%
   group_by(Date)%>%
-  dplyr::summarise(D_SNOW=max(D_SNOW),
+  dplyr::summarise(D_SNOW=max(D_SNOW,na.rm = T),
   #keep the precipitation consistent with the names in processed Fluxnet dataset
-   P_F=sum(P))
+   P_F=sum(P),
+   RH=mean(RH)
+  )%>%
+  mutate(D_SNOW=ifelse(is.infinite(D_SNOW),NA,D_SNOW))
 
 ##C.merge the data
-df.Tha.daily<-left_join(df.Tha.daily,df.Tha.snow_and_P.daily[,c("Date","D_SNOW")])
+df.Tha.daily<-left_join(df.Tha.daily,df.Tha.snow_and_P.daily[,c("Date","D_SNOW","RH")])
 #for Precipitation after 2023-->using P_F in df.Tha.snow_and_P
 sub_df<-df.Tha.snow_and_P.daily %>%
   filter(Date>=as.Date("2023-01-01") & Date<=as.Date("2023-12-31"))
@@ -153,7 +157,7 @@ df.Dav.daily<-df.Dav.daily%>%
 df.Dav.more<-read.csv(paste0(base.path,"Meteo_download/ICOSETC_CH-Dav_METEO_L2/",
                              "ICOSETC_CH-Dav_METEO_L2.csv"))
 df.Dav.snow<-df.Dav.more %>%
-  dplyr::select(TIMESTAMP_START,TIMESTAMP_END,D_SNOW)%>%
+  dplyr::select(TIMESTAMP_START,TIMESTAMP_END,D_SNOW,RH)%>%
   mutate(TIMESTAMP_START=ymd_hm(TIMESTAMP_START),
          TIMESTAMP_END=ymd_hm(TIMESTAMP_END),
          Date=as.Date(TIMESTAMP_END))
@@ -167,7 +171,8 @@ df.Dav.snow.daily<-df.Dav.snow %>%
   ##addtional filter:set snow depth data to NA if the D_SNOW>0 in summer(June-Sep)
   mutate(D_SNOW=ifelse(Month>=6 & Month<=9,NA,D_SNOW))%>%
   group_by(Date)%>%
-  dplyr::summarise(D_SNOW=max(D_SNOW))
+  dplyr::summarise(D_SNOW=max(D_SNOW),
+                   RH=mean(RH,na.rm=T))
 
 ##C.merge the data
 df.Dav.daily<-left_join(df.Dav.daily,df.Dav.snow.daily)

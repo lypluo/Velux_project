@@ -22,6 +22,14 @@ df.Dav.sel<-df.demo%>%
   filter(TREE_STATUS=="Minor diseases"|TREE_STATUS=="Healthy")%>%
   #remove the trees that with DBH=0
   filter(TREE_DBH>0)
+#update in Mar, 2025: calculated the area of CP_01, and CP_03:
+df_Demo<-df.Dav.sel %>%
+  group_by(TREE_PLOT)%>%
+  summarise(TREE_EASTING_max=max(TREE_EASTWARD_DIST,na.rm = T),
+            TREE_NORTHWARD_max=max(TREE_NORTHWARD_DIST,na.rm = T))%>%
+  group_by(TREE_PLOT)%>%
+  summarise(CP_Area=pi*max(TREE_EASTING_max,TREE_NORTHWARD_max)^2)
+sum(df_Demo$CP_Area)
 #save the data:
 save(df.Dav.sel,file = paste("./data/Sapflow/df.Dav.Demographics.RDA"))
 

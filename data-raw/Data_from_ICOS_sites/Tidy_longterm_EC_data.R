@@ -15,7 +15,6 @@ Davos_files2<-list.files(paste0(base.path,"CH-Dav/2019-2023/"))
 Tharandt_files1<-list.files(paste0(base.path,"DE-Tha/1996-2018/"))
 Tharandt_files2<-list.files(paste0(base.path,"DE-Tha/2020-2023/"))
 
-
 ##################
 #I. For Daily data
 ##################
@@ -31,15 +30,15 @@ df.Dav.daily_20192023<-read.csv(file=paste0(base.path,"CH-Dav/2019-2023/",Davos_
 #
 df.Dav.daily_19972018_sel<-df.Dav.daily_19972018 %>%
   dplyr::select(TIMESTAMP,NEE_VUT_REF,RECO_NT_VUT_REF,GPP_NT_VUT_REF,
-         LE_F_MDS,SW_IN_F_MDS,PPFD_IN,TA_F_MDS,VPD_F_MDS,WS_F,P_F,PA_F)
+         LE_F_MDS,SW_IN_F_MDS,PPFD_IN,TA_F_MDS,VPD_F_MDS,WS_F,P_F,PA_F,LW_IN_F,LW_OUT)
 names(df.Dav.daily_19972018_sel)<-c("Date","NEE","RECO","GPP","LE",
-      "SW_IN","PPFD_IN","TA","VPD","WS","P","Pressure")
+      "SW_IN","PPFD_IN","TA","VPD","WS","P","Pressure","LW_IN","LW_OUT")
 
 df.Dav.daily_20192023_sel<-df.Dav.daily_20192023 %>%
   dplyr::select(TIMESTAMP,NEE_VUT_REF,RECO_NT_VUT_REF,GPP_NT_VUT_REF,
-                LE_F_MDS,SW_IN_F_MDS,PPFD_IN,TA_F_MDS,VPD_F_MDS,WS_F,P_F,PA_F)
+                LE_F_MDS,SW_IN_F_MDS,PPFD_IN,TA_F_MDS,VPD_F_MDS,WS_F,P_F,PA_F,LW_IN_F,LW_OUT)
 names(df.Dav.daily_20192023_sel)<-c("Date","NEE","RECO","GPP","LE",
-                                    "SW_IN","PPFD_IN","TA","VPD","WS","P","Pressure")
+      "SW_IN","PPFD_IN","TA","VPD","WS","P","Pressure","LW_IN","LW_OUT")
 df.Dav.daily_sel<-rbind(df.Dav.daily_19972018_sel,df.Dav.daily_20192023_sel)
 df.Dav.daily_sel<-df.Dav.daily_sel%>%
   mutate(Date=ymd(Date))
@@ -55,18 +54,18 @@ df.Tha.daily_fromPI<-readxl::read_xlsx(paste0(base.path,"DE-Tha/","DE-Tha_2008-2
 #
 df.Tha.daily_19962018_sel<-df.Tha.daily_19962018 %>%
   dplyr::select(TIMESTAMP,NEE_VUT_REF,RECO_NT_VUT_REF,GPP_NT_VUT_REF,
-                LE_F_MDS,SW_IN_F_MDS,PPFD_IN,TA_F_MDS,VPD_F_MDS,WS_F,P_F,PA_F)
+                LE_F_MDS,SW_IN_F_MDS,PPFD_IN,TA_F_MDS,VPD_F_MDS,WS_F,P_F,PA_F,LW_IN_F,LW_OUT)
 names(df.Tha.daily_19962018_sel)<-c("Date","NEE","RECO","GPP","LE",
-                                    "SW_IN","PPFD_IN","TA","VPD","WS","P","Pressure")
+                                    "SW_IN","PPFD_IN","TA","VPD","WS","P","Pressure","LW_IN","LW_OUT")
 df.Tha.daily_19962018_sel<-df.Tha.daily_19962018_sel%>%
   mutate(Date=ymd(Date))
 
 
 df.Tha.daily_20202023_sel<-df.Tha.daily_20202023 %>%
   dplyr::select(TIMESTAMP,NEE_VUT_REF,RECO_NT_VUT_REF,GPP_NT_VUT_REF,
-                LE_F_MDS,SW_IN_F_MDS,PPFD_IN,TA_F_MDS,VPD_F_MDS,WS_F,P_F,PA_F)
+                LE_F_MDS,SW_IN_F_MDS,PPFD_IN,TA_F_MDS,VPD_F_MDS,WS_F,P_F,PA_F,LW_IN_F,LW_OUT)
 names(df.Tha.daily_20202023_sel)<-c("Date","NEE","RECO","GPP","LE",
-                                    "SW_IN","PPFD_IN","TA","VPD","WS","P","Pressure")
+                                    "SW_IN","PPFD_IN","TA","VPD","WS","P","Pressure","LW_IN","LW_OUT")
 df.Tha.daily_20202023_sel<-df.Tha.daily_20202023_sel%>%
   mutate(Date=ymd(Date))
 

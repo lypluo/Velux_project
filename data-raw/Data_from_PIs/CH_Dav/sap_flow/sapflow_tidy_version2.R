@@ -51,6 +51,9 @@ data_temp2<-data_temp2%>%
          )
 #merge two datasets:
 df.TreeInfo<-full_join(data_temp1,data_temp2)
+##save all the Davos tree info for Weigeng(2025-09):
+# save.path_weigeng<-"D:/EE_WSL/Potential_supervision/Qin_wengen/Paper_prep/Manuscript/Third_round_send_to_coauthors/Data_sent_to_Weigeng/"
+# write.csv(df.TreeInfo,file = paste0(save.path_weigeng,"df.metadata_alltree_Davos.csv"))
 
 #-----------
 #Relative sap flow ~ relative sapwood depth data
@@ -89,6 +92,9 @@ df.A_sapwood_Roman<-df.A_sapwood_Roman %>%
          )
 #
 df.metadata_Roman<-left_join(df.DBH_H_Roman,df.A_sapwood_Roman)
+##save the Trees with sap sensor info for Weigeng(2025-09):
+# save.path_weigeng<-"D:/EE_WSL/Potential_supervision/Qin_wengen/Paper_prep/Manuscript/Third_round_send_to_coauthors/Data_sent_to_Weigeng/"
+# write.csv(df.metadata_Roman,file = paste0(save.path_weigeng,"df.metadata_saptree_Roman.csv"))
 
 #-----------
 #sap flow from Davos-->sent by Richard Peter"
@@ -109,10 +115,12 @@ df.sap.daily<-df.sap%>%
   mutate(Date=as.Date(timestamp),HH=hour(timestamp))%>%
   group_by(Date)%>%
   summarise(across(c(starts_with("Sap"),"sfd_mean"),sum,na.rm=TRUE))
-#convert the unit of SFD from cm3 cm-2 h-1 to mm m-2 d-1
+#convert the unit of SFD from cm3 cm-2 h-1 to mm (m-2) d-1
 df.sap.daily<-df.sap.daily %>%
   mutate(across(c(starts_with("Sap"),"sfd_mean"),
                 ~ (.*10*24)/c(100*100)))
+  # mutate(across(c(starts_with("Sap"),"sfd_mean"),
+  #             ~ (.*10)))
 #
 df.sap.daily[df.sap.daily==0]<-NA
 df.sap_Richard<-df.sap.daily %>%
@@ -153,10 +161,10 @@ ggsave(p_comp,file=paste0("./test/check_sapflow/","compare_sapflow.png"),width =
 
 df.sap<-df.sap
 df.sap.daily<-df.sap.daily
-#save the sap data:
-# save.path<-"./data/Sapflow/"
-# save(df.sap,file = paste0(save.path,"df.Davos.sap_hourly_fromRichard.RDA")) #unit:cm3 cm-2 h-1
-# save(df.sap.daily,file = paste0(save.path,"df.Davos.sap_daily_fromRichard.RDA")) #unit: mm m-2 d-1
+#save the sap data for weigeng(2025-09):
+# save.path_weigeng<-"D:/EE_WSL/Potential_supervision/Qin_wengen/Paper_prep/Manuscript/Third_round_send_to_coauthors/Data_sent_to_Weigeng/"
+# save(df.sap,file = paste0(save.path_weigeng,"df.Davos.sap_hourly_fromRichard.RDA")) #unit:cm3 cm-2 h-1
+# save(df.sap.daily,file = paste0(save.path_weigeng,"df.Davos.sap_daily_fromRichard.RDA")) #unit: mm m-2 d-1
 
 #----------------
 #(1)Develop the relationship betwen DBH and SWThick
@@ -348,7 +356,7 @@ ggplot(data=df.TreeInfo)+
  #(4)calculate the stand-level sap flow:
  #----------------
  #Now I will use two ways of approach to estimate the stand-level sapflow:
- #A.sap flow data only based no the DBH classes
+ #A.sap flow data only based on the DBH classes
  #B. based on 1) the relationship between relative SFD and relative SWthick, 2) based on DBH classes
  #C. based on 1) the relationship between relative SFD and relative SWthick,
  #2)the SFD linear relationship with DBH (monthly data)-->based on tree demographics in Davos,

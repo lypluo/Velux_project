@@ -39,7 +39,6 @@ for (i in 1:5) {
     #for campaign 3: deleted the duplicated lines in file "2023-04-21-1417_logdata_c3_dav_t3_u_amax"
     Dav_temp<-read_bat_6800(paste0(Dav.path,"LiCor/",campaign.Amax.folder[i],"/ori_format_files/"), data_start = 66)
     df.Dav_Amax_C1C5<-rbind(df.Dav_Amax_C1C5,Dav_temp)
-  
 }
 
 ##For C6:using the LI-cor6400:
@@ -81,6 +80,7 @@ load("./data/Leaf_traits.data.RDA")
 df.Area<-df.traits %>%
   filter(Measurement=="Amax")%>%
   select(c(sample_ID,ImageJ_leaf_area))%>%
+  #unit: Cm2
   mutate_at("ImageJ_leaf_area",as.numeric)%>%
   #name the practical value of leaf area to Sadj(-->corresponding to the S in the orignal name)
   mutate(S_adj=ImageJ_leaf_area,
